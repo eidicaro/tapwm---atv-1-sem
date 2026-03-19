@@ -38,11 +38,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
    
     // web
-    boxShadow: '0px 4px 10px rgba(0,0,0,0.4)',
+    boxShadow: '0px 8px 0px rgba(0,0,0,0.4)',
 
     // mobile
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.4,
     shadowRadius: 6,
     elevation: 8

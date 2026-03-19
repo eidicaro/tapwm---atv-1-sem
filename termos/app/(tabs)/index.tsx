@@ -1,5 +1,6 @@
 import { StyleSheet } from 'react-native';
 import Header from '../header';
+import Footer from '../footer';
 import { View, Text } from 'react-native';
 
 export default function HomeScreen() {
@@ -10,6 +11,9 @@ export default function HomeScreen() {
       <Text style={{fontSize: 80, fontWeight: "900", color: "#fff", textAlign: 'center'}}>Cabeça lindão</Text>
       <Text style={styles.text}>Somos uma pequena iniciativa que deseja ajudar iniciantes na área de tecnologia a compreender melhor os termos; o que eles significam e como se pronuncia corretamente.
       Aqui você poderá encontrar as principais termologias usadas no mundo tecnológico</Text>
+
+      <Footer></Footer>
+      
     </View>
   );
 }
