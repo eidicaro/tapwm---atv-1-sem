@@ -1,24 +1,25 @@
 import { useState } from 'react';
 import { View, TextInput, Button, Alert, StyleSheet, Text } from 'react-native';
+import { Pressable} from 'react-native';
 
 import { db } from '../src/backend/firebaseconfig';
 import { collection, addDoc } from 'firebase/firestore';
 
+import Header from './header';
+
 export default function SugestaoScreen() {
   const [termo, setTermo] = useState('');
-  const [traducao, setTraducao] = useState('');
   const [descricao, setDescricao] = useState('');
 
   const enviarSugestao = async () => {
-    if (!termo || !traducao) {
-      Alert.alert("Preencha termo e tradução!");
+    if (!termo) {
+      Alert.alert("Preencha termo");
       return;
     }
 
     try {
       await addDoc(collection(db, "sugestoes"), {
         termo,
-        traducao,
         descricao,
         status: "pendente",
         data: new Date()
@@ -27,7 +28,6 @@ export default function SugestaoScreen() {
       Alert.alert("Sugestão enviada!");
 
       setTermo('');
-      setTraducao('');
       setDescricao('');
     } catch (error) {
       console.error(error);
@@ -37,33 +37,37 @@ export default function SugestaoScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Sugerir novo termo</Text>
+      <Header></Header>
+
+      <Text style={styles.title}>Conhece algum termo e ele não está aqui? Sem Problemas!
+      nos mande qual é o termo e seu significado que iremos adicioná-lo ao nosso dicionário
+      </Text>
 
       <TextInput
-        placeholder="Termo em inglês"
-        placeholderTextColor="#999"
+        placeholder="Digite o Termo"
+        placeholderTextColor="#fff"
         value={termo}
         onChangeText={setTermo}
         style={styles.input}
       />
 
       <TextInput
-        placeholder="Tradução"
-        placeholderTextColor="#999"
-        value={traducao}
-        onChangeText={setTraducao}
-        style={styles.input}
-      />
-
-      <TextInput
         placeholder="Descrição"
-        placeholderTextColor="#999"
+        placeholderTextColor="#fff"
         value={descricao}
         onChangeText={setDescricao}
         style={styles.input}
       />
 
-      <Button title="Enviar Sugestão" onPress={enviarSugestao} />
+      <Pressable
+        onPress={enviarSugestao}
+        style={({ pressed }) => [
+          styles.button,
+          { opacity: pressed ? 0.6 : 1 }
+        ]}
+      >
+        <Text style={styles.buttonText}>Enviar Sugestão</Text>
+      </Pressable>
     </View>
   );
 }
@@ -71,19 +75,36 @@ export default function SugestaoScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
-    backgroundColor: "#000"
+    backgroundColor: "#02071C"
   },
   title: {
     color: "#fff",
     fontSize: 20,
-    marginBottom: 20
+    textAlign: 'center',
+    margin: 50,
   },
   input: {
     borderWidth: 1,
     borderColor: "#555",
-    padding: 12,
-    marginBottom: 12,
+    backgroundColor: 'rgba(159, 162, 186, 0.23)',
+    borderRadius: 40,
+    maxWidth: '60%',
+    marginHorizontal: '20%',
+    padding: 20,
+    marginBottom: 40,
     color: "#fff"
+  },
+  button:{
+    padding: 20,
+    maxWidth:'70%',
+    marginHorizontal: '35%',
+    backgroundColor: '#044CF7',
+    borderRadius: 40,
+  },
+  buttonText:{
+    textAlign: 'center',
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
   }
 });
