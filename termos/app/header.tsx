@@ -17,10 +17,10 @@ export default function Header() {
       <View style={styles.pags}>
         {/* Botão voltar */}
       <Link href="/sugestao">
-            <Text type="link" style={styles.text}>Ir para Sugestão</Text>
+            <Text  style={styles.text}>Ir para Sugestão</Text>
       </Link>
       <Link href="/">
-            <Text type="link" style={styles.text}>Home</Text>
+            <Text style={styles.text}>Home</Text>
       </Link>
       </View>
 
