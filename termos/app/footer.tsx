@@ -9,7 +9,7 @@ export default function Footer() {
       {/* Logo + nome */}
       <View style={styles.esquerda}>
         <Image
-          source={require('../assets/images/logo-dtech1.png')}
+          source={require('../assets/images/logo_lar.png')}
           style={styles.logo}
         />
         <Text  style={{color: '#fff', textAlign: 'center', fontSize: 18}}>Ajudando a Inovar Vidas</Text>
@@ -41,7 +41,7 @@ const styles = StyleSheet.create({
   container: {
     height: 300,
     width: '100%',
-    backgroundColor: '#000',
+    backgroundColor: '#363839',
     flexDirection: 'row',
     marginTop: "auto",
     alignItems: 'center',

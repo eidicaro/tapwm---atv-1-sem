@@ -46,7 +46,7 @@ export default function SugestaoScreen() {
 
       <TextInput
         placeholder="Digite o Termo"
-        placeholderTextColor="#fff"
+        placeholderTextColor="#000"
         value={termo}
         onChangeText={setTermo}
         style={styles.input}
@@ -54,7 +54,7 @@ export default function SugestaoScreen() {
 
       <TextInput
         placeholder="Descrição"
-        placeholderTextColor="#fff"
+        placeholderTextColor="#000"
         value={descricao}
         onChangeText={setDescricao}
         style={styles.input}
@@ -78,10 +78,10 @@ export default function SugestaoScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#02071C"
+    backgroundColor: "#fff"
   },
   title: {
-    color: "#fff",
+    color: "#000",
     fontSize: 20,
     textAlign: 'center',
     margin: 50,
@@ -98,12 +98,12 @@ const styles = StyleSheet.create({
     color: "#fff",
 
         // web
-        boxShadow: '0px 10px 10px rgba(0,0,0,0.8)',
+        boxShadow: '0px 3px 3px rgba(0,0,0,0.7)',
 
         // mobile
         shadowColor: '#000',
-        shadowOffset: { width: 10, height: 10 },
-        shadowOpacity: 0.8,
+        shadowOffset: { width: 4, height: 4 },
+        shadowOpacity: 0.7,
         shadowRadius: 6,
         elevation: 8
   },
@@ -112,16 +112,16 @@ const styles = StyleSheet.create({
     maxWidth:'70%',
     marginHorizontal: '35%',
     marginBottom: '1%',
-    backgroundColor: '#044CF7',
+    backgroundColor: '#1a80b6',
     borderRadius: 40,
 
        // web
-       boxShadow: '0px 10px 10px rgba(0,0,0,0.8)',
+       boxShadow: '0px 8px 10px rgba(0,0,0,0.5)',
 
        // mobile
        shadowColor: '#000',
-       shadowOffset: { width: 10, height: 10 },
-       shadowOpacity: 0.8,
+       shadowOffset: { width: 8, height: 8 },
+       shadowOpacity: 0.5,
        shadowRadius: 6,
        elevation: 8
   },

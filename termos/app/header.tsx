@@ -9,7 +9,7 @@ export default function Header() {
       {/* Logo + nome */}
       <View>
         <Image
-          source={require('../assets/images/logo-dtech.png')}
+          source={require('../assets/images/logo_lar.png')}
           style={styles.logo}
         />
       </View>
@@ -32,20 +32,20 @@ const styles = StyleSheet.create({
   container: {
     height: 100,
     width: '100%',
-    backgroundColor: '#02071C',
+    backgroundColor: 'rgba(26,144,182, 0.8)',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
    
     // web
-    boxShadow: '0px 8px 0px rgba(0,0,0,0.4)',
+    boxShadow: '0px 4px 5px rgba(0,0,0,0.3)',
 
     // mobile
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4,
+    shadowOffset: { width: 0, height: 4},
+    shadowOpacity: 0.3,
     shadowRadius: 6,
-    elevation: 8
+    elevation: 10
   },
   left: {
     flexDirection: 'row',
@@ -53,7 +53,7 @@ const styles = StyleSheet.create({
   },
   logo: {
     width: 200,
-    height: 200,
+    height: 60,
     marginRight: 10
   },
   text:{
