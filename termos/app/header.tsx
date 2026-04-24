@@ -1,72 +1,57 @@
 import { View, Text, Image, StyleSheet } from 'react-native';
 import { Link } from 'expo-router';
+import { colors } from './theme';
 
 export default function Header() {
-
   return (
     <View style={styles.container}>
-      
-      {/* Logo + nome */}
-      <View>
-        <Image
-          source={require('../assets/images/logo_lar.png')}
-          style={styles.logo}
-        />
-      </View>
+      <Image
+        source={require('../assets/images/logo_lar.png')}
+        style={styles.logo}
+        resizeMode="contain"
+      />
 
-      <View style={styles.pags}>
-        {/* Botão voltar */}
-      <Link href="/sugestao">
-            <Text  style={styles.text}>Ir para Sugestão</Text>
-      </Link>
-      <Link href="/">
-            <Text style={styles.text}>Home</Text>
-      </Link>
-      </View>
+      <View style={styles.nav}>
+        <Link href="/sugestao">
+          <Text style={styles.link}>Sugestão</Text>
+        </Link>
 
+        <Link href="/">
+          <Text style={styles.link}>Home</Text>
+        </Link>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    height: 100,
+    height: 80,
     width: '100%',
-    backgroundColor: 'rgba(26,144,182, 0.8)',
+    backgroundColor: '#080C15',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-   
-    // web
-    boxShadow: '0px 4px 5px rgba(0,0,0,0.3)',
+    paddingHorizontal: 30,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
 
-    // mobile
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4},
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 10
-  },
-  left: {
-    flexDirection: 'row',
-    alignItems: 'center'
-  },
   logo: {
-    width: 200,
-    height: 60,
-    marginRight: 10
+    width: 150,
+    height: 50,
   },
-  text:{
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-    padding: 12,
-  },
-  pags:{
+
+  nav: {
     flexDirection: 'row',
-    marginRight: '5%',
     alignItems: 'center',
-    justifyContent: 'space-around',
-    width: '20%',
-  }
+    marginRight: '10%',
+  },
+  
+  link: {
+    color: colors.text,
+    fontSize: 15,
+    marginLeft: 25,
+    fontWeight: '800',
+  },
 });

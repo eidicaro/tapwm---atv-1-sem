@@ -1,79 +1,82 @@
 import { View, Text, Image, StyleSheet } from 'react-native';
-import { Link } from 'expo-router';
+import { colors } from './theme';
 
 export default function Footer() {
-
   return (
     <View style={styles.container}>
       
-      {/* Logo + nome */}
-      <View style={styles.esquerda}>
+      <View style={styles.left}>
         <Image
           source={require('../assets/images/logo_lar.png')}
           style={styles.logo}
+          resizeMode="contain"
         />
-        <Text  style={{color: '#fff', textAlign: 'center', fontSize: 18}}>Ajudando a Inovar Vidas</Text>
+
+        <Text style={styles.subtitle}>
+          Ajudando a inovar vidas através da tecnologia
+        </Text>
       </View>
 
-      <View style={styles.direita}>
-        <View style={styles.pags}>
-          <Image
-              source={require('../assets/images/linkedin.png')}
-              style={styles.social}
-            />
-            <Image
-              source={require('../assets/images/instagram.png')}
-              style={styles.social}
-            />
-            <Image
-              source={require('../assets/images/facebook.png')}
-              style={styles.social}
-            />
+      <View style={styles.right}>
+        <Text style={styles.contact}>Conecte-se conosco</Text>
+
+        <View style={styles.socials}>
+          <Image source={require('../assets/images/linkedin.png')} style={styles.icon} />
+          <Image source={require('../assets/images/instagram.png')} style={styles.icon} />
+          <Image source={require('../assets/images/facebook.png')} style={styles.icon} />
         </View>
-        <Text style={{color: '#fff', textAlign: 'center', fontSize: 14}}>Entre em Contato Conosco!</Text>
       </View>
-          
-      </View>
+
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    height: 300,
     width: '100%',
-    backgroundColor: '#363839',
+    backgroundColor: '#080C15',
     flexDirection: 'row',
-    marginTop: "auto",
+    justifyContent: 'space-around',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    paddingVertical: 30,
+    paddingHorizontal: 30,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
   },
+
   left: {
-    flexDirection: 'row',
-    alignItems: 'center'
+    maxWidth: '50%',
   },
+
   logo: {
-    width: 300,
+    width: 320,
     height: 100,
+    marginBottom: 10,
   },
-  text:{
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-    padding: 12,
+
+  subtitle: {
+    color: '#05ACFF',
+    fontSize: 18,
+    fontWeight: '700'
   },
-  pags:{
+
+  right: {
+    alignItems: 'center',
+  },
+
+  contact: {
+    color: colors.text,
+    marginBottom: 10,
+    fontSize: 18,
+  },
+
+  socials: {
     flexDirection: 'row',
-    width: '20%',
   },
-  social: {
-    width: 50,
-    height: 50,
-    marginHorizontal: 5,
-  },
-  direita:{
-    marginRight: '5%',
-  },
-  esquerda:{
-    marginLeft: '5%',
+
+  icon: {
+    width: 42,
+    height: 42,
+    marginLeft: 12,
   },
 });

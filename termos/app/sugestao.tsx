@@ -1,12 +1,14 @@
 import { useState } from 'react';
-import { View, TextInput, Button, Alert, StyleSheet, Text } from 'react-native';
-import { Pressable} from 'react-native';
+import { View, TextInput, Alert, StyleSheet, Text, Pressable, Image } from 'react-native';
 
 import { db } from '../src/backend/firebaseconfig';
 import { collection, addDoc } from 'firebase/firestore';
 
 import Header from './header';
 import Footer from './footer';
+import { colors } from './theme';
+import { LinearGradient } from 'expo-linear-gradient';
+
 
 export default function SugestaoScreen() {
   const [termo, setTermo] = useState('');
@@ -14,7 +16,7 @@ export default function SugestaoScreen() {
 
   const enviarSugestao = async () => {
     if (!termo) {
-      Alert.alert("Preencha termo");
+      Alert.alert("Preencha o termo");
       return;
     }
 
@@ -27,108 +29,121 @@ export default function SugestaoScreen() {
       });
 
       Alert.alert("Sugestão enviada!");
-
       setTermo('');
       setDescricao('');
     } catch (error) {
-      console.error(error);
       Alert.alert("Erro ao enviar");
     }
   };
 
   return (
-    <View style={styles.container}>
-      <Header></Header>
+    <LinearGradient
+    colors={['#0B0F1A', '#0F172A', '#121826']}
+    start={{ x: 0, y: 0 }}
+    end={{ x: 1, y: 0 }}
+    style={{ flex: 1 }}
+  >
+      <View style={styles.container}>
+        <Header />
 
-      <Text style={styles.title}>Conhece algum termo e ele não está aqui? Sem Problemas!
-      nos mande qual é o termo e seu significado que iremos adicioná-lo ao nosso dicionário
-      </Text>
+        <View style={styles.content}>
+          <View style={styles.titleContainer}>
+                    <Text style={styles.title}>Ajude a Crescer</Text>
+                    <Text style={styles.title2}>nosso dicionário!</Text>
+          </View>
 
-      <TextInput
-        placeholder="Digite o Termo"
-        placeholderTextColor="#000"
-        value={termo}
-        onChangeText={setTermo}
-        style={styles.input}
-      />
+          <TextInput
+            placeholder="Digite o termo"
+            placeholderTextColor={colors.textSecondary}
+            value={termo}
+            onChangeText={setTermo}
+            style={styles.input}
+          />
 
-      <TextInput
-        placeholder="Descrição"
-        placeholderTextColor="#000"
-        value={descricao}
-        onChangeText={setDescricao}
-        style={styles.input}
-      />
+          <TextInput
+            placeholder="Digite a descrição"
+            placeholderTextColor={colors.textSecondary}
+            value={descricao}
+            onChangeText={setDescricao}
+            style={[styles.input, { height: 120 }]}
+            multiline
+          />
 
-      <Pressable
-        onPress={enviarSugestao}
-        style={({ pressed }) => [
-          styles.button,
-          { opacity: pressed ? 0.6 : 1 }
-        ]}
-      >
-        <Text style={styles.buttonText}>Enviar Sugestão</Text>
-      </Pressable>
+          <Pressable style={styles.button} onPress={enviarSugestao}>
+            <Image source={require('../assets/images/enviar.png')} style={styles.icon}/>
+            <Text style={styles.buttonText}>Enviar Sugestão</Text>
+          </Pressable>
+        </View>
 
-      <Footer></Footer>
-    </View>
+        <Footer />
+      </View>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff"
   },
-  title: {
-    color: "#000",
-    fontSize: 20,
-    textAlign: 'center',
-    margin: 50,
+
+  content: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    marginLeft: '35%',
+    marginRight: '35%',
+    paddingHorizontal: 20,
   },
+
   input: {
+    width: '100%',
+    maxWidth: 500,
+    backgroundColor: colors.input,
+    borderRadius: 12,
+    padding: 15,
+    marginBottom: 15,
+    color: colors.text,
     borderWidth: 1,
-    borderColor: "#555",
-    backgroundColor: 'rgba(159, 162, 186, 0.23)',
-    borderRadius: 40,
-    maxWidth: '60%',
-    marginHorizontal: '20%',
-    padding: 20,
-    marginBottom: 40,
-    color: "#fff",
-
-        // web
-        boxShadow: '0px 3px 3px rgba(0,0,0,0.7)',
-
-        // mobile
-        shadowColor: '#000',
-        shadowOffset: { width: 4, height: 4 },
-        shadowOpacity: 0.7,
-        shadowRadius: 6,
-        elevation: 8
+    borderColor: colors.border,
   },
-  button:{
-    padding: 20,
-    maxWidth:'70%',
-    marginHorizontal: '35%',
-    marginBottom: '1%',
-    backgroundColor: '#1a80b6',
-    borderRadius: 40,
 
-       // web
-       boxShadow: '0px 8px 10px rgba(0,0,0,0.5)',
-
-       // mobile
-       shadowColor: '#000',
-       shadowOffset: { width: 8, height: 8 },
-       shadowOpacity: 0.5,
-       shadowRadius: 6,
-       elevation: 8
+  titleContainer: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    marginBottom: 20,
   },
-  buttonText:{
-    textAlign: 'center',
+  
+  title: {
+    fontSize: 40,
+    fontWeight: 'bold',
+    color: colors.text,
+    maxWidth: 700,
+  },
+  title2: {
+    fontSize: 40,
+    fontWeight: 'bold',
+    color: colors.primary,
+    maxWidth: 700,
+  },
+
+  button: {
+    flexDirection: 'row',
+    backgroundColor: colors.primary,
+    paddingVertical: 15,
+    paddingHorizontal: 150,
+    borderRadius: 12,
+  },
+
+  buttonText: {
     color: '#fff',
     fontWeight: 'bold',
-    fontSize: 16,
-  }
+    marginRight: 5,
+  },
+
+  icon: {
+    width: 22,
+    height: 22,
+    marginRight: 8,
+  },
+
 });
