@@ -38,7 +38,7 @@ export default function SugestaoScreen() {
 
   return (
     <LinearGradient
-    colors={['#0B0F1A', '#0F172A', '#121826']}
+    colors={['#04092B', '#0D1F4F', '#144070']}
     start={{ x: 0, y: 0 }}
     end={{ x: 1, y: 0 }}
     style={{ flex: 1 }}
