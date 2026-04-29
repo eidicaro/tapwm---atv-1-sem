@@ -1,25 +1,44 @@
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, ScrollView, Modal, Pressable } from 'react-native';
 import { colors } from './theme';
 
-export default function ModalScreen() {
+type Termo = {
+  termo: string;
+  descricao: string;
+};
+
+type Props = {
+  visible: boolean;
+  onClose: () => void;
+  termos: Termo[];
+};
+
+export default function ModalScreen({ visible, onClose, termos }: Props) {
   return (
-    <View style={styles.overlay}>
-      <View style={styles.modal}>
-        <Text style={styles.title}>Dicionário</Text>
+    <Modal transparent visible={visible} animationType="fade">
+      <View style={styles.overlay}>
+        <View style={styles.modal}>
+          <Text style={styles.title}>Dicionário</Text>
 
-        <ScrollView>
-          <Text style={styles.letter}>A</Text>
+          <ScrollView>
+            {termos.length > 0 ? (
+              termos.map((item, index) => (
+                <View key={index} style={styles.card}>
+                  <Text style={styles.term}>{item.termo}</Text>
+                  <Text style={styles.desc}>{item.descricao}</Text>
+                </View>
+              ))
+            ) : (
+              <Text style={styles.empty}>Nenhum termo encontrado.</Text>
+            )}
+          </ScrollView>
 
-          <View style={styles.card}>
-            <Text style={styles.term}>API</Text>
-            <Text style={styles.desc}>
-              Interface que permite comunicação entre sistemas
-            </Text>
-          </View>
-
-        </ScrollView>
+          <Pressable style={styles.closeButton} onPress={onClose}>
+            <Text style={styles.closeText}>Fechar</Text>
+          </Pressable>
+        </View>
       </View>
-    </View>
+    </Modal>
   );
 }
 
@@ -32,7 +51,7 @@ const styles = StyleSheet.create({
   },
 
   modal: {
-    width: '80%',
+    width: '85%',
     maxHeight: '80%',
     backgroundColor: colors.card,
     borderRadius: 16,
@@ -44,27 +63,43 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
-  },
-
-  letter: {
-    color: colors.primary,
-    fontSize: 18,
-    marginTop: 10,
+    textAlign: 'center',
   },
 
   card: {
     backgroundColor: colors.input,
     padding: 12,
     borderRadius: 10,
-    marginTop: 10,
+    marginBottom: 10,
   },
 
   term: {
     color: colors.text,
     fontWeight: 'bold',
+    fontSize: 16,
   },
 
   desc: {
     color: colors.textSecondary,
+    marginTop: 4,
+  },
+
+  empty: {
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginTop: 20,
+  },
+
+  closeButton: {
+    marginTop: 15,
+    backgroundColor: colors.primary,
+    padding: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+
+  closeText: {
+    color: '#fff',
+    fontWeight: 'bold',
   },
 });

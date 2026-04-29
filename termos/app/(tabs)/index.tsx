@@ -5,42 +5,61 @@ import { colors } from '../theme';
 import { Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
+import ModalScreen from '../modal';
 
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../../src/backend/firebaseconfig';
 
 export default function HomeScreen() {
   const [busca, setBusca] = useState('');
+  const [modalVisible, setModalVisible] = useState(false);
+  const [resultados, setResultados] = useState<any[]>([]);
 
-  const buscarTermo = async () => {
-    if (!busca || busca.trim() === '') return;
+const buscarTermo = async () => {
+  if (!busca || busca.trim() === '') return;
 
-    try {
-      const querySnapshot = await getDocs(collection(db, "termos"));
+  try {
+    const querySnapshot = await getDocs(collection(db, "termos"));
+    const termoBusca = busca.toLowerCase();
 
-      const resultados: any[] = [];
+    const encontrados: any[] = [];
 
-      const termoBusca = busca.toLowerCase();
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      const termo = data?.termo;
 
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
+      if (
+        typeof termo === 'string' &&
+        termo.toLowerCase().includes(termoBusca)
+      ) {
+        encontrados.push(data);
+      }
+    });
 
-        const termo = data?.termo; // 🔥 proteção
+    setResultados(encontrados);
+    setModalVisible(true);
 
-        if (
-          typeof termo === 'string' &&
-          termo.toLowerCase().includes(termoBusca)
-        ) {
-          resultados.push(data);
-        }
-      });
+  } catch (error) {
+    console.error("Erro na busca:", error);
+  }
+};
 
-      console.log("Resultados:", resultados);
+const abrirDicionarioCompleto = async () => {
+  try {
+    const querySnapshot = await getDocs(collection(db, "termos"));
+    const todos: any[] = [];
 
-    } catch (error) {
-      console.error("Erro na busca:", error);
-    }
-  };
+    querySnapshot.forEach((doc) => {
+      todos.push(doc.data());
+    });
+
+    setResultados(todos);
+    setModalVisible(true);
+
+  } catch (error) {
+    console.error("Erro ao carregar termos:", error);
+  }
+};
 
   return (
     <LinearGradient
@@ -84,7 +103,7 @@ export default function HomeScreen() {
             </Pressable>
           </View>
 
-          <Pressable style={styles.button}>
+          <Pressable style={styles.button} onPress={abrirDicionarioCompleto}>
             <Text style={styles.buttonText}>Ver dicionário completo</Text>
             <Image
               source={require('../../assets/images/livro.png')}
@@ -95,7 +114,15 @@ export default function HomeScreen() {
 
         <Footer />
       </View>
+
+      <ModalScreen
+  visible={modalVisible}
+  onClose={() => setModalVisible(false)}
+  termos={resultados}
+/>
     </LinearGradient>
+
+    
   );
 }
 

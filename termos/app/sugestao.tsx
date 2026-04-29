@@ -89,55 +89,57 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'flex-start',
-    marginLeft: '35%',
-    marginRight: '35%',
+    alignItems: 'center',
+    width: '100%',
     paddingHorizontal: 20,
+  },
+
+  titleContainer: {
+    width: '100%',
+    maxWidth: 600,
+    marginBottom: 25,
+    alignItems: 'flex-start',
+  },
+
+  title: {
+    fontSize: 38,
+    fontWeight: 'bold',
+    color: colors.text,
+  },
+
+  title2: {
+    fontSize: 38,
+    fontWeight: 'bold',
+    color: colors.primary,
   },
 
   input: {
     width: '100%',
-    maxWidth: 500,
+    maxWidth: 600,
     backgroundColor: colors.input,
-    borderRadius: 12,
-    padding: 15,
+    borderRadius: 14,
+    padding: 16,
     marginBottom: 15,
     color: colors.text,
     borderWidth: 1,
     borderColor: colors.border,
   },
 
-  titleContainer: {
-    flexDirection: 'column',
-    alignItems: 'flex-start',
-    marginBottom: 20,
-  },
-  
-  title: {
-    fontSize: 40,
-    fontWeight: 'bold',
-    color: colors.text,
-    maxWidth: 700,
-  },
-  title2: {
-    fontSize: 40,
-    fontWeight: 'bold',
-    color: colors.primary,
-    maxWidth: 700,
-  },
-
   button: {
+    width: '100%',
+    maxWidth: 600,
     flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
     backgroundColor: colors.primary,
-    paddingVertical: 15,
-    paddingHorizontal: 150,
-    borderRadius: 12,
+    paddingVertical: 16,
+    borderRadius: 14,
   },
 
   buttonText: {
     color: '#fff',
     fontWeight: 'bold',
-    marginRight: 5,
+    fontSize: 16,
   },
 
   icon: {
@@ -145,5 +147,4 @@ const styles = StyleSheet.create({
     height: 22,
     marginRight: 8,
   },
-
 });
