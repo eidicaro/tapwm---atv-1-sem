@@ -1,31 +1,18 @@
 import { useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  Pressable,
-  FlatList,
-  StyleSheet,
-  TextInput,
-  Modal,
-  Alert
-} from 'react-native';
+import { useAuth } from '../src/context/AuthContext';
+import { useRouter } from 'expo-router';
+import { View, Text, Pressable, FlatList, StyleSheet, TextInput, Modal, Alert } from 'react-native';
 
 import { db } from '../src/backend/firebaseconfig';
-import {
-  collection,
-  getDocs,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  doc
-} from 'firebase/firestore';
-
+import {  collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors } from './theme';
 import Header from './header';
 import Footer from './footer';
 
 export default function AdminScreen() {
+  const router = useRouter();
+
   const [sugestoes, setSugestoes] = useState<any[]>([]);
   const [termos, setTermos] = useState<any[]>([]);
 
@@ -169,7 +156,26 @@ export default function AdminScreen() {
     }
   };
 
-  return (
+  // ========== ROTA PROTEGIDA =============
+  const { user, loading, logout } = useAuth();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      setTimeout(() => {
+        router.replace('/login');
+      }, 0);
+    }
+  }, [user, loading]);
+  
+  if (loading) {
+    return null;
+  }
+  
+  if (!user) {
+    return null;
+  }
+   
+    return (
     <LinearGradient colors={['#04092B', '#0D1F4F', '#144070']} style={{ flex: 1 }}>
       <View style={styles.container}>
         <Header />
@@ -307,6 +313,16 @@ export default function AdminScreen() {
             </Pressable>
           </View>
         </Modal>
+
+        <Pressable
+        style={styles.button}
+        onPress={async () => {
+          await logout();
+          router.replace('/');
+        }}
+      >
+        <Text style={styles.buttonText}>Sair</Text>
+      </Pressable>
 
       </View>
     </LinearGradient>
