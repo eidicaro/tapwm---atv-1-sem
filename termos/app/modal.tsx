@@ -1,6 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Modal, Pressable } from 'react-native';
-import { colors } from './theme';
+import { View, Text, StyleSheet, ScrollView, Modal, Pressable, TextInput } from 'react-native';
 
 type Termo = {
   termo: string;
@@ -18,24 +17,46 @@ export default function ModalScreen({ visible, onClose, termos }: Props) {
     <Modal transparent visible={visible} animationType="fade">
       <View style={styles.overlay}>
         <View style={styles.modal}>
-          <Text style={styles.title}>Dicionário</Text>
 
-          <ScrollView>
+          {/* Header do modal */}
+          <View style={styles.modalHeader}>
+            <Text style={styles.title}>Dicionário</Text>
+            <Pressable style={styles.closeIconBtn} onPress={onClose}>
+              <Text style={styles.closeIconText}>✕</Text>
+            </Pressable>
+          </View>
+
+          {/* Contador */}
+          {termos.length > 0 && (
+            <Text style={styles.counter}>{termos.length} termo{termos.length !== 1 ? 's' : ''} encontrado{termos.length !== 1 ? 's' : ''}</Text>
+          )}
+
+          {/* Lista */}
+          <ScrollView showsVerticalScrollIndicator={false} style={styles.scroll}>
             {termos.length > 0 ? (
               termos.map((item, index) => (
                 <View key={index} style={styles.card}>
-                  <Text style={styles.term}>{item.termo}</Text>
-                  <Text style={styles.desc}>{item.descricao}</Text>
+                  <View style={styles.cardAccent} />
+                  <View style={styles.cardContent}>
+                    <Text style={styles.term}>{item.termo}</Text>
+                    <Text style={styles.desc}>{item.descricao}</Text>
+                  </View>
                 </View>
               ))
             ) : (
-              <Text style={styles.empty}>Nenhum termo encontrado.</Text>
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyIcon}>🔍</Text>
+                <Text style={styles.empty}>Nenhum termo encontrado.</Text>
+                <Text style={styles.emptySub}>Tente buscar por outro termo ou explore o dicionário completo.</Text>
+              </View>
             )}
           </ScrollView>
 
+          {/* Botão fechar */}
           <Pressable style={styles.closeButton} onPress={onClose}>
             <Text style={styles.closeText}>Fechar</Text>
           </Pressable>
+
         </View>
       </View>
     </Modal>
@@ -45,61 +66,126 @@ export default function ModalScreen({ visible, onClose, termos }: Props) {
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.7)',
+    backgroundColor: 'rgba(0,0,0,0.75)',
     justifyContent: 'center',
     alignItems: 'center',
   },
 
   modal: {
-    width: '85%',
-    maxHeight: '80%',
-    backgroundColor: colors.card,
-    borderRadius: 16,
+    width: '88%',
+    maxHeight: '82%',
+    backgroundColor: '#0D1B3E',
+    borderRadius: 20,
     padding: 20,
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 6,
   },
 
   title: {
-    color: colors.text,
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    textAlign: 'center',
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: '600',
+  },
+
+  closeIconBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 9,
+    backgroundColor: 'rgba(255,255,255,0.07)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  closeIconText: {
+    color: 'rgba(255,255,255,0.5)',
+    fontSize: 13,
+  },
+
+  counter: {
+    color: 'rgba(255,255,255,0.3)',
+    fontSize: 11,
+    marginBottom: 14,
+  },
+
+  scroll: {
+    marginBottom: 14,
   },
 
   card: {
-    backgroundColor: colors.input,
+    flexDirection: 'row',
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderRadius: 12,
+    marginBottom: 8,
+    overflow: 'hidden',
+    borderWidth: 0.5,
+    borderColor: 'rgba(255,255,255,0.07)',
+  },
+
+  cardAccent: {
+    width: 3,
+    backgroundColor: '#5B8AF0',
+  },
+
+  cardContent: {
+    flex: 1,
     padding: 12,
-    borderRadius: 10,
-    marginBottom: 10,
   },
 
   term: {
-    color: colors.text,
-    fontWeight: 'bold',
-    fontSize: 16,
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 14,
+    marginBottom: 4,
+    textTransform: 'capitalize',
   },
 
   desc: {
-    color: colors.textSecondary,
-    marginTop: 4,
+    color: 'rgba(255,255,255,0.5)',
+    fontSize: 12,
+    lineHeight: 18,
+  },
+
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: 32,
+  },
+
+  emptyIcon: {
+    fontSize: 32,
+    marginBottom: 10,
   },
 
   empty: {
-    color: colors.textSecondary,
+    color: 'rgba(255,255,255,0.5)',
+    fontSize: 14,
+    fontWeight: '500',
+    marginBottom: 6,
+  },
+
+  emptySub: {
+    color: 'rgba(255,255,255,0.25)',
+    fontSize: 12,
     textAlign: 'center',
-    marginTop: 20,
+    lineHeight: 18,
   },
 
   closeButton: {
-    marginTop: 15,
-    backgroundColor: colors.primary,
-    padding: 12,
-    borderRadius: 10,
+    backgroundColor: '#5B8AF0',
+    paddingVertical: 13,
+    borderRadius: 12,
     alignItems: 'center',
   },
 
   closeText: {
     color: '#fff',
-    fontWeight: 'bold',
+    fontWeight: '600',
+    fontSize: 14,
   },
 });

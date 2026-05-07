@@ -1,27 +1,35 @@
-import { View, Text, Image, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, Pressable, Image } from 'react-native';
 import { Link } from 'expo-router';
-import { colors } from './theme';
 
 const { width } = Dimensions.get('window');
-
 const isSmall = width < 500;
 
 export default function Header() {
+  const isMobile = width < 768;
   return (
     <View style={styles.container}>
-      <Image
-        source={require('../assets/images/logo_lar.png')}
-        style={styles.logo}
-        resizeMode="contain"
-      />
+      {/* Logo */}
+      <View style={styles.logoWrapper}>
+        <Image
+                  source={require('../assets/images/logo_lar.png')}
+                  style={[styles.logo, isMobile && styles.logoMobile]}
+                  resizeMode="contain"
+                />
+        
+      </View>
 
+      {/* Nav */}
       <View style={styles.nav}>
-        <Link href="/sugestao">
-          <Text style={styles.link}>Sugestão</Text>
+        <Link href="/sugestao" asChild>
+          <Pressable style={styles.linkBtn}>
+            <Text style={styles.linkText}>Sugestão</Text>
+          </Pressable>
         </Link>
 
-        <Link href="/">
-          <Text style={styles.link}>Home</Text>
+        <Link href="/" asChild>
+          <Pressable style={styles.linkBtn}>
+            <Text style={styles.linkText}>Home</Text>
+          </Pressable>
         </Link>
       </View>
     </View>
@@ -30,58 +38,84 @@ export default function Header() {
 
 const styles = StyleSheet.create({
   container: {
-    height: isSmall ? 75 : 95,
+    height: isSmall ? 64 : 72,
     width: '100%',
-
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-
-    paddingHorizontal: isSmall ? 15 : 40,
-
-    backgroundColor: 'rgba(5, 10, 30, 0.92)',
-
-    borderBottomWidth: 1,
+    paddingHorizontal: isSmall ? 14 : 32,
+    backgroundColor: 'rgba(5, 10, 30, 0.97)',
+    borderBottomWidth: 0.5,
     borderBottomColor: 'rgba(255,255,255,0.08)',
-
-    shadowColor: '#00A3FF',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.35,
-    shadowRadius: 25,
-    elevation: 20,
+    shadowColor: '#5B8AF0',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 12,
   },
 
-  logo: {
-    width: isSmall ? 120 : 180,
-    height: isSmall ? 45 : 60,
+  logoWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+
+  logoIconBox: {
+    width: 30,
+    height: 30,
+    borderRadius: 9,
+    backgroundColor: '#5B8AF0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  logoIconText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+
+  logoText: {
+    color: '#fff',
+    fontSize: isSmall ? 14 : 16,
+    fontWeight: '500',
+    letterSpacing: 0.3,
+  },
+
+  logoAccent: {
+    color: '#5B8AF0',
   },
 
   nav: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: isSmall ? 10 : 22,
+    gap: isSmall ? 6 : 10,
   },
 
-  link: {
-    color: '#F5FAFF',
-    fontSize: isSmall ? 13 : 16,
-    fontWeight: '800',
-    letterSpacing: 1.2,
-
-    paddingVertical: isSmall ? 8 : 12,
-    paddingHorizontal: isSmall ? 12 : 22,
-
-    borderRadius: 14,
-
+  linkBtn: {
+    paddingVertical: isSmall ? 6 : 8,
+    paddingHorizontal: isSmall ? 10 : 16,
+    borderRadius: 10,
     backgroundColor: 'rgba(255,255,255,0.04)',
+    borderWidth: 0.5,
+    borderColor: 'rgba(91,138,240,0.25)',
+  },
 
-    borderWidth: 1,
-    borderColor: 'rgba(0, 163, 255, 0.18)',
+  linkText: {
+    color: 'rgba(255,255,255,0.75)',
+    fontSize: isSmall ? 12 : 13,
+    fontWeight: '500',
+  },
 
-    shadowColor: '#00A3FF',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.28,
-    shadowRadius: 14,
-    elevation: 10,
+  
+  logo: {
+    width: 240,
+    height: 80,
+    opacity: 0.9,
+  },
+
+  logoMobile: {
+    width: 160,
+    height: 55,
   },
 });
