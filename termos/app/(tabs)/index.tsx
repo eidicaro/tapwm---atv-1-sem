@@ -93,7 +93,11 @@ export default function HomeScreen() {
           </View>
 
           {/* Botão dicionário completo */}
-          <Pressable style={styles.button} onPress={abrirDicionarioCompleto}>
+          <Pressable style={ ({ hovered }) => [
+            styles.button,
+            hovered && styles.buttonHover
+          ]} 
+            onPress={abrirDicionarioCompleto}>
             <Image
               source={require('../../assets/images/livro.png')}
               style={styles.buttonIcon}
@@ -117,13 +121,15 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    alignItems: 'center',
   },
-
+  
   content: {
     flex: 1,
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'center',
     paddingHorizontal: 24,
+    width: '40%',
   },
 
   badge: {
@@ -160,7 +166,7 @@ const styles = StyleSheet.create({
     fontSize: 34,
     fontWeight: '600',
     color: '#fff',
-    textAlign: 'center',
+    textAlign: 'left',
     lineHeight: 44,
     maxWidth: 600,
   },
@@ -268,5 +274,11 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.35)',
     fontSize: 11,
     marginTop: 3,
+  },
+
+  buttonHover: {
+    backgroundColor: 'rgba(91, 138, 240, 0.85)',
+    transform: [{ scale: 1.02 }],
+    transitionDuration: '0.4s',
   },
 });

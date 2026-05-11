@@ -1,5 +1,14 @@
 import { useState } from 'react';
-import { View, TextInput, Alert, StyleSheet, Text, Pressable } from 'react-native';
+import {
+  View,
+  TextInput,
+  Alert,
+  StyleSheet,
+  Text,
+  Pressable,
+  ScrollView,
+  useWindowDimensions,
+} from 'react-native';
 
 import { db } from '../src/backend/firebaseconfig';
 import { collection, addDoc } from 'firebase/firestore';
@@ -11,6 +20,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 export default function SugestaoScreen() {
   const [termo, setTermo] = useState('');
   const [descricao, setDescricao] = useState('');
+
+  const { width } = useWindowDimensions();
+
+  const mobile = width < 768;
 
   const enviarSugestao = async () => {
     if (!termo) {
@@ -44,46 +57,91 @@ export default function SugestaoScreen() {
       <View style={styles.container}>
         <Header />
 
-        <View style={styles.content}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.content}>
 
-          {/* Cabeçalho da página */}
-          <View style={styles.titleContainer}>
-            <Text style={styles.preLabel}>Contribua</Text>
-            <Text style={styles.title}>Ajude a crescer</Text>
-            <Text style={styles.titleAccent}>nosso dicionário!</Text>
-            <Text style={styles.subtitle}>
-              Conhece um termo técnico que não está aqui? Nos conte!
-            </Text>
+            {/* HERO */}
+            <View
+              style={[
+                styles.heroCard,
+                mobile && styles.heroCardMobile,
+              ]}
+            >
+              <View style={styles.heroOrb} />
+
+              <Text style={styles.preLabel}>
+                Contribua
+              </Text>
+
+              <Text
+                style={[
+                  styles.heroTitle,
+                  mobile && styles.heroTitleMobile,
+                ]}
+              >
+                Ajude a{'\n'}crescer{' '}
+                <Text style={styles.heroTitleAccent}>
+                  nosso{'\n'}dicionário!
+                </Text>
+              </Text>
+
+              <Text style={styles.heroSubtitle}>
+                Conhece um termo que não está aqui?
+                Nos conta!
+              </Text>
+            </View>
+
+            {/* FORM */}
+            <View style={styles.form}>
+
+              <Text style={styles.label}>TERMO</Text>
+
+              <TextInput
+                placeholder="Ex: Machine Learning"
+                placeholderTextColor="rgba(255,255,255,0.2)"
+                value={termo}
+                onChangeText={setTermo}
+                style={[
+                  styles.input,
+                  termo.length > 0 && styles.inputFocused,
+                ]}
+              />
+
+              <Text style={styles.label}>DESCRIÇÃO</Text>
+
+              <TextInput
+                placeholder="Descreva o significado do termo..."
+                placeholderTextColor="rgba(255,255,255,0.2)"
+                value={descricao}
+                onChangeText={setDescricao}
+                multiline
+                style={[
+                  styles.input,
+                  styles.inputMultiline,
+                  descricao.length > 0 &&
+                    styles.inputFocused,
+                ]}
+              />
+
+              <Pressable
+                style={({ pressed, hovered }) => [
+                  styles.button,
+                  pressed && styles.buttonPressed,
+                  hovered && styles.buttonHover,
+                ]}
+                onPress={enviarSugestao}
+              >
+                <Text style={styles.buttonText}>
+                  ✈ Enviar sugestão
+                </Text>
+              </Pressable>
+
+            </View>
           </View>
-
-          {/* Campo: Termo */}
-          <Text style={styles.label}>Termo</Text>
-          <TextInput
-            placeholder="Ex: Machine Learning"
-            placeholderTextColor="rgba(255,255,255,0.25)"
-            value={termo}
-            onChangeText={setTermo}
-            style={styles.input}
-          />
-
-          {/* Campo: Descrição */}
-          <Text style={styles.label}>Descrição</Text>
-          <TextInput
-            placeholder="Descreva o significado do termo..."
-            placeholderTextColor="rgba(255,255,255,0.25)"
-            value={descricao}
-            onChangeText={setDescricao}
-            style={[styles.input, styles.inputMultiline]}
-            multiline
-          />
-
-          {/* Botão enviar */}
-          <Pressable style={styles.button} onPress={enviarSugestao}>
-            <Text style={styles.buttonIcon}>✈</Text>
-            <Text style={styles.buttonText}>Enviar sugestão</Text>
-          </Pressable>
-
-        </View>
+        </ScrollView>
 
         <Footer />
       </View>
@@ -96,98 +154,142 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: '100%',
-    paddingHorizontal: 24,
+  scrollContent: {
+    flexGrow: 1,
+    paddingVertical: 20,
   },
 
-  titleContainer: {
+  content: {
+    flex: 1,
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    gap: 18,
+    width: '100%',
+  },
+
+  /* HERO */
+
+  heroCard: {
     width: '100%',
     maxWidth: 560,
-    marginBottom: 28,
+    backgroundColor: '#0A0F2E',
+    borderRadius: 24,
+    padding: 28,
+    overflow: 'hidden',
+    borderWidth: 0.5,
+    borderColor: 'rgba(91,138,240,0.15)',
+  },
+
+  heroCardMobile: {
+    padding: 20,
+    borderRadius: 20,
+  },
+
+  heroOrb: {
+    position: 'absolute',
+    width: 160,
+    height: 160,
+    borderRadius: 999,
+    backgroundColor: 'rgba(91,138,240,0.12)',
+    top: -40,
+    right: -40,
   },
 
   preLabel: {
     color: 'rgba(255,255,255,0.3)',
-    fontSize: 11,
-    letterSpacing: 0.08,
+    fontSize: 10,
     textTransform: 'uppercase',
-    marginBottom: 8,
+    fontWeight: '600',
+    marginBottom: 10,
+    letterSpacing: 1,
   },
 
-  title: {
+  heroTitle: {
     fontSize: 34,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#fff',
-    lineHeight: 42,
-  },
-
-  titleAccent: {
-    fontSize: 34,
-    fontWeight: '600',
-    color: '#5B8AF0',
     lineHeight: 42,
     marginBottom: 12,
   },
 
-  subtitle: {
-    color: 'rgba(255,255,255,0.4)',
+  heroTitleMobile: {
+    fontSize: 26,
+    lineHeight: 32,
+  },
+
+  heroTitleAccent: {
+    color: '#5B8AF0',
+    fontStyle: 'italic',
+  },
+
+  heroSubtitle: {
+    color: 'rgba(255,255,255,0.45)',
     fontSize: 14,
     lineHeight: 22,
   },
 
-  label: {
-    color: 'rgba(255,255,255,0.4)',
-    fontSize: 12,
-    marginBottom: 6,
-    alignSelf: 'flex-start',
+  /* FORM */
+
+  form: {
     width: '100%',
     maxWidth: 560,
+  },
+
+  label: {
+    color: 'rgba(255,255,255,0.35)',
+    fontSize: 10,
+    textTransform: 'uppercase',
+    fontWeight: '600',
+    marginBottom: 6,
     marginLeft: 2,
+    letterSpacing: 1,
   },
 
   input: {
     width: '100%',
-    maxWidth: 560,
     backgroundColor: 'rgba(255,255,255,0.06)',
-    borderRadius: 12,
-    padding: 14,
+    borderRadius: 14,
+    padding: 16,
     marginBottom: 14,
     color: '#fff',
     fontSize: 14,
-    borderWidth: 0.5,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+  },
+
+  inputFocused: {
+    borderColor: 'rgba(91,138,240,0.5)',
+    backgroundColor: 'rgba(91,138,240,0.07)',
   },
 
   inputMultiline: {
-    height: 120,
+    minHeight: 120,
     textAlignVertical: 'top',
   },
 
   button: {
     width: '100%',
-    maxWidth: 560,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
     backgroundColor: '#5B8AF0',
-    paddingVertical: 15,
-    borderRadius: 14,
+    paddingVertical: 16,
+    borderRadius: 16,
+    alignItems: 'center',
     marginTop: 4,
-    gap: 8,
   },
 
-  buttonIcon: {
-    fontSize: 16,
-    color: '#fff',
+  buttonPressed: {
+    opacity: 0.85,
+    transform: [{ scale: 0.98 }],
+  },
+
+  buttonHover: {
+    backgroundColor: 'rgba(91, 138, 240, 0.85)',
+    transform: [{ scale: 1.02 }],
+    transitionDuration: '0.4s',
   },
 
   buttonText: {
     color: '#fff',
-    fontWeight: '600',
+    fontWeight: '700',
     fontSize: 15,
   },
 });

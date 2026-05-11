@@ -20,17 +20,30 @@ export default function Header() {
 
       {/* Nav */}
       <View style={styles.nav}>
-        <Link href="/sugestao" asChild>
-          <Pressable style={styles.linkBtn}>
-            <Text style={styles.linkText}>Sugestão</Text>
-          </Pressable>
+      <Pressable
+        style={({ hovered, pressed }) => [
+          styles.linkBtn,
+          hovered && styles.linkBtnHover,
+          pressed && styles.linkBtnPressed,
+        ]}
+      >
+        <Link href="/" style={styles.linkInner}>
+          <Text style={styles.linkText}>Home</Text>
         </Link>
+      </Pressable>
 
-        <Link href="/" asChild>
-          <Pressable style={styles.linkBtn}>
-            <Text style={styles.linkText}>Home</Text>
-          </Pressable>
+      <Pressable
+        style={({ hovered, pressed }) => [
+          styles.linkBtn,
+          hovered && styles.linkBtnHover,
+          pressed && styles.linkBtnPressed,
+        ]}
+      >
+        <Link href="/sugestao" style={styles.linkInner}>
+          <Text style={styles.linkText}>Sugestão</Text>
         </Link>
+      </Pressable>
+
       </View>
     </View>
   );
@@ -117,5 +130,23 @@ const styles = StyleSheet.create({
   logoMobile: {
     width: 160,
     height: 55,
+  },
+
+
+  linkBtnHover: {
+    backgroundColor: 'rgba(91,138,240,0.15)',
+    borderColor: 'rgba(91,138,240,0.5)',
+    transitionDuration: '0.2s',
+  },
+  
+  linkBtnPressed: {
+    opacity: 0.8,
+  },
+
+  linkInner: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

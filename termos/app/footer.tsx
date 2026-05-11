@@ -30,19 +30,19 @@ export default function Footer() {
         <Text style={styles.contactLabel}>Conecte-se conosco</Text>
 
         <View style={styles.socials}>
-          <Pressable style={styles.socialBtn}>
+          <Pressable style={ ({hovered}) => [styles.socialBtn, hovered && styles.buttonHover]}>
             <Image
               source={require('../assets/images/linkedin.png')}
               style={styles.icon}
             />
           </Pressable>
-          <Pressable style={styles.socialBtn}>
+          <Pressable style={ ({hovered}) => [styles.socialBtn, hovered && styles.buttonHover]}>
             <Image
               source={require('../assets/images/instagram.png')}
               style={styles.icon}
             />
           </Pressable>
-          <Pressable style={styles.socialBtn}>
+          <Pressable style={ ({hovered}) => [styles.socialBtn, hovered && styles.buttonHover]}>
             <Image
               source={require('../assets/images/facebook.png')}
               style={styles.icon}
@@ -160,4 +160,10 @@ const styles = StyleSheet.create({
     height: 18,
     opacity: 0.7,
   },
+
+  buttonHover: {
+    backgroundColor: 'rgba(91,138,240,0.15)',
+    borderColor: 'rgba(91,138,240,0.5)',
+    transitionDuration: '0.2s',
+  }
 });

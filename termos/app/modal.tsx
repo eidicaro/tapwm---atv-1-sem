@@ -1,5 +1,12 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Modal, Pressable, TextInput } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Modal,
+  Pressable,
+} from 'react-native';
 
 type Termo = {
   termo: string;
@@ -12,48 +19,113 @@ type Props = {
   termos: Termo[];
 };
 
-export default function ModalScreen({ visible, onClose, termos }: Props) {
+export default function ModalScreen({
+  visible,
+  onClose,
+  termos,
+}: Props) {
+
+  // Ordena alfabeticamente
+  const termosOrdenados = [...termos].sort((a, b) =>
+    a.termo.localeCompare(b.termo, 'pt-BR')
+  );
+
+  // Agrupa por letra
+  const termosAgrupados = termosOrdenados.reduce((acc, item) => {
+    const letra = item.termo.charAt(0).toUpperCase();
+
+    if (!acc[letra]) {
+      acc[letra] = [];
+    }
+
+    acc[letra].push(item);
+
+    return acc;
+  }, {} as Record<string, Termo[]>);
+
   return (
     <Modal transparent visible={visible} animationType="fade">
       <View style={styles.overlay}>
         <View style={styles.modal}>
 
-          {/* Header do modal */}
+          {/* Header */}
           <View style={styles.modalHeader}>
             <Text style={styles.title}>Dicionário</Text>
-            <Pressable style={styles.closeIconBtn} onPress={onClose}>
+
+            <Pressable
+              style={styles.closeIconBtn}
+              onPress={onClose}
+            >
               <Text style={styles.closeIconText}>✕</Text>
             </Pressable>
           </View>
 
           {/* Contador */}
           {termos.length > 0 && (
-            <Text style={styles.counter}>{termos.length} termo{termos.length !== 1 ? 's' : ''} encontrado{termos.length !== 1 ? 's' : ''}</Text>
+            <Text style={styles.counter}>
+              {termos.length} termo
+              {termos.length !== 1 ? 's' : ''} encontrado
+              {termos.length !== 1 ? 's' : ''}
+            </Text>
           )}
 
           {/* Lista */}
-          <ScrollView showsVerticalScrollIndicator={false} style={styles.scroll}>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            style={styles.scroll}
+          >
             {termos.length > 0 ? (
-              termos.map((item, index) => (
-                <View key={index} style={styles.card}>
-                  <View style={styles.cardAccent} />
-                  <View style={styles.cardContent}>
-                    <Text style={styles.term}>{item.termo}</Text>
-                    <Text style={styles.desc}>{item.descricao}</Text>
+              Object.keys(termosAgrupados).map((letra) => (
+                <View key={letra}>
+
+                  {/* Título da letra */}
+                  <View style={styles.letterContainer}>
+                    <Text style={styles.letterTitle}>
+                      {letra}
+                    </Text>
+
+                    <View style={styles.letterLine} />
                   </View>
+
+                  {/* Termos */}
+                  {termosAgrupados[letra].map((item, index) => (
+                    <View key={index} style={styles.card}>
+                      <View style={styles.cardAccent} />
+
+                      <View style={styles.cardContent}>
+                        <Text style={styles.term}>
+                          {item.termo}
+                        </Text>
+
+                        <Text style={styles.desc}>
+                          {item.descricao}
+                        </Text>
+                      </View>
+                    </View>
+                  ))}
                 </View>
               ))
             ) : (
               <View style={styles.emptyState}>
                 <Text style={styles.emptyIcon}>🔍</Text>
-                <Text style={styles.empty}>Nenhum termo encontrado.</Text>
-                <Text style={styles.emptySub}>Tente buscar por outro termo ou explore o dicionário completo.</Text>
+
+                <Text style={styles.empty}>
+                  Nenhum termo encontrado.
+                </Text>
+
+                <Text style={styles.emptySub}>
+                  Tente buscar por outro termo ou explore o
+                  dicionário completo.
+                </Text>
               </View>
             )}
           </ScrollView>
 
           {/* Botão fechar */}
-          <Pressable style={styles.closeButton} onPress={onClose}>
+          <Pressable
+            style={styles.closeButton}
+            onPress={onClose}
+          >
             <Text style={styles.closeText}>Fechar</Text>
           </Pressable>
 
@@ -117,6 +189,30 @@ const styles = StyleSheet.create({
   scroll: {
     marginBottom: 14,
   },
+
+  // ===== LETRAS =====
+
+  letterContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 12,
+    marginBottom: 10,
+  },
+
+  letterTitle: {
+    color: '#5B8AF0',
+    fontSize: 18,
+    fontWeight: '700',
+    marginRight: 10,
+  },
+
+  letterLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+  },
+
+  // ===== CARDS =====
 
   card: {
     flexDirection: 'row',
