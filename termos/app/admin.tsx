@@ -10,7 +10,6 @@ import { db } from '../src/backend/firebaseconfig';
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 import { LinearGradient } from 'expo-linear-gradient';
 import Header from './header';
-import Footer from './footer';
 
 export default function AdminScreen() {
   const router = useRouter();
@@ -138,12 +137,12 @@ export default function AdminScreen() {
     if (!loading && !user) {
       setTimeout(() => { router.replace('/login'); }, 0);
     }
-  }, [user, loading]);
+  }, [user, loading, router]);
 
   if (loading || !user) return null;
 
   return (
-    <LinearGradient colors={['#04092B', '#0D1F4F', '#144070']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ flex: 1 }}>
+    <LinearGradient colors={['#07111F', '#0A1C2B', '#0C2530']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ flex: 1 }}>
       <View style={styles.container}>
         <Header />
 
@@ -450,7 +449,7 @@ const styles = StyleSheet.create({
   modal: {
     flex: 1,
     padding: 22,
-    backgroundColor: '#04092B',
+    backgroundColor: '#07111F',
   },
 
   modalHeader: {
@@ -536,7 +535,7 @@ const styles = StyleSheet.create({
   },
 
   primaryBtn: {
-    backgroundColor: '#5B8AF0',
+    backgroundColor: '#32D6A0',
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
@@ -544,7 +543,7 @@ const styles = StyleSheet.create({
   },
 
   primaryBtnText: {
-    color: '#fff',
+    color: '#06251B',
     fontWeight: '600',
     fontSize: 14,
   },

@@ -1,152 +1,21 @@
-import { View, Text, StyleSheet, Dimensions, Pressable, Image } from 'react-native';
-import { Link } from 'expo-router';
-
-const { width } = Dimensions.get('window');
-const isSmall = width < 500;
-
+import { View, Text, StyleSheet, Pressable, useWindowDimensions } from 'react-native';
+import { Link, usePathname } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { colors } from './theme';
 export default function Header() {
-  const isMobile = width < 768;
-  return (
-    <View style={styles.container}>
-      {/* Logo */}
-      <View style={styles.logoWrapper}>
-        <Image
-                  source={require('../assets/images/logo_lar.png')}
-                  style={[styles.logo, isMobile && styles.logoMobile]}
-                  resizeMode="contain"
-                />
-        
-      </View>
-
-      {/* Nav */}
-      <View style={styles.nav}>
-      <Pressable
-        style={({ hovered, pressed }) => [
-          styles.linkBtn,
-          hovered && styles.linkBtnHover,
-          pressed && styles.linkBtnPressed,
-        ]}
-      >
-        <Link href="/" style={styles.linkInner}>
-          <Text style={styles.linkText}>Home</Text>
-        </Link>
-      </Pressable>
-
-      <Pressable
-        style={({ hovered, pressed }) => [
-          styles.linkBtn,
-          hovered && styles.linkBtnHover,
-          pressed && styles.linkBtnPressed,
-        ]}
-      >
-        <Link href="/sugestao" style={styles.linkInner}>
-          <Text style={styles.linkText}>Sugestão</Text>
-        </Link>
-      </Pressable>
-
-      </View>
-    </View>
-  );
+  const { width } = useWindowDimensions(); const path = usePathname(); const mobile = width < 640;
+  const Item = ({ href, label, icon }: { href: '/' | '/sugestao'; label: string; icon: keyof typeof Ionicons.glyphMap }) => {
+    const active = href === '/' ? path === '/' : path.startsWith(href);
+    return <Link href={href} asChild><Pressable style={({ hovered, pressed }) => [s.item, active && s.active, hovered && s.hover, pressed && s.pressed]}>
+      {mobile ? <Ionicons name={icon} size={18} color={active ? colors.primary : colors.textSecondary} /> : <Text style={[s.link, active && s.linkActive]}>{label}</Text>}
+    </Pressable></Link>;
+  };
+  return <View style={s.shell}><View style={s.inner}><Link href="/" asChild><Pressable style={s.brand}><View style={s.mark}><Text style={s.code}>{'<>'}</Text></View><View><Text style={s.name}>Dicionário Tech</Text>{!mobile && <Text style={s.by}>POR LAR SÃO FRANCISCO</Text>}</View></Pressable></Link><View style={s.nav}><Item href="/" label="Início" icon="home-outline" /><Item href="/sugestao" label="Sugerir termo" icon="bulb-outline" /></View></View></View>;
 }
-
-const styles = StyleSheet.create({
-  container: {
-    height: isSmall ? 64 : 72,
-    width: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: isSmall ? 14 : 32,
-    backgroundColor: 'rgba(5, 10, 30, 0.97)',
-    borderBottomWidth: 0.5,
-    borderBottomColor: 'rgba(255,255,255,0.08)',
-    shadowColor: '#5B8AF0',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 20,
-    elevation: 12,
-  },
-
-  logoWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-
-  logoIconBox: {
-    width: 30,
-    height: 30,
-    borderRadius: 9,
-    backgroundColor: '#5B8AF0',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  logoIconText: {
-    color: '#fff',
-    fontSize: 15,
-    fontWeight: '700',
-  },
-
-  logoText: {
-    color: '#fff',
-    fontSize: isSmall ? 14 : 16,
-    fontWeight: '500',
-    letterSpacing: 0.3,
-  },
-
-  logoAccent: {
-    color: '#5B8AF0',
-  },
-
-  nav: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: isSmall ? 6 : 10,
-  },
-
-  linkBtn: {
-    paddingVertical: isSmall ? 6 : 8,
-    paddingHorizontal: isSmall ? 10 : 16,
-    borderRadius: 10,
-    backgroundColor: 'rgba(255,255,255,0.04)',
-    borderWidth: 0.5,
-    borderColor: 'rgba(91,138,240,0.25)',
-  },
-
-  linkText: {
-    color: 'rgba(255,255,255,0.75)',
-    fontSize: isSmall ? 12 : 13,
-    fontWeight: '500',
-  },
-
-  
-  logo: {
-    width: 240,
-    height: 80,
-    opacity: 0.9,
-  },
-
-  logoMobile: {
-    width: 160,
-    height: 55,
-  },
-
-
-  linkBtnHover: {
-    backgroundColor: 'rgba(91,138,240,0.15)',
-    borderColor: 'rgba(91,138,240,0.5)',
-    transitionDuration: '0.2s',
-  },
-  
-  linkBtnPressed: {
-    opacity: 0.8,
-  },
-
-  linkInner: {
-    width: '100%',
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+const s = StyleSheet.create({
+  shell: { width: '100%', backgroundColor: 'rgba(7,17,31,.96)', borderBottomWidth: 1, borderBottomColor: colors.border, zIndex: 20 },
+  inner: { width: '100%', maxWidth: 1180, height: 76, alignSelf: 'center', paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  brand: { flexDirection: 'row', alignItems: 'center', gap: 11 }, mark: { width: 38, height: 38, borderRadius: 12, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', shadowColor: colors.primary, shadowOpacity: .25, shadowRadius: 12 },
+  code: { color: '#06251B', fontSize: 14, fontWeight: '900' }, name: { color: colors.text, fontSize: 16, fontWeight: '800' }, by: { color: colors.textMuted, fontSize: 8, fontWeight: '700', letterSpacing: 1.2, marginTop: 2 },
+  nav: { flexDirection: 'row', gap: 6 }, item: { minWidth: 42, height: 42, paddingHorizontal: 15, borderRadius: 12, alignItems: 'center', justifyContent: 'center' }, active: { backgroundColor: 'rgba(50,214,160,.1)' }, hover: { backgroundColor: 'rgba(255,255,255,.06)' }, pressed: { opacity: .7 }, link: { color: colors.textSecondary, fontSize: 14, fontWeight: '600' }, linkActive: { color: colors.primary },
 });

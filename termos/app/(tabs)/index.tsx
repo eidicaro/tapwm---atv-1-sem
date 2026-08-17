@@ -1,318 +1,34 @@
-import {
-  StyleSheet,
-  View,
-  Text,
-  TextInput,
-  Pressable,
-  useWindowDimensions,
-  ScrollView,
-} from 'react-native';
-
-import Header from '../header';
-import Footer from '../footer';
-import { Image } from 'react-native';
+import { StyleSheet, View, Text, TextInput, Pressable, useWindowDimensions, ScrollView, ActivityIndicator } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
-import ModalScreen from '../modal';
-
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../../src/backend/firebaseconfig';
+import Header from '../header'; import Footer from '../footer'; import ModalScreen from '../modal'; import { colors } from '../theme';
 
 export default function HomeScreen() {
-  const [busca, setBusca] = useState('');
-  const [modalVisible, setModalVisible] = useState(false);
-  const [resultados, setResultados] = useState<any[]>([]);
-
-  const { width } = useWindowDimensions();
-
-  const isMobile = width < 768;
-  const isTablet = width >= 768 && width < 1200;
-
-  const buscarTermo = async () => {
-    if (!busca || busca.trim() === '') return;
-
-    try {
-      const querySnapshot = await getDocs(collection(db, 'termos'));
-      const termoBusca = busca.toLowerCase();
-      const encontrados: any[] = [];
-
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        const termo = data?.termo;
-
-        if (
-          typeof termo === 'string' &&
-          termo.toLowerCase().includes(termoBusca)
-        ) {
-          encontrados.push(data);
-        }
-      });
-
-      setResultados(encontrados);
-      setModalVisible(true);
-    } catch (error) {
-      console.error('Erro na busca:', error);
-    }
-  };
-
-  const abrirDicionarioCompleto = async () => {
-    try {
-      const querySnapshot = await getDocs(collection(db, 'termos'));
-      const todos: any[] = [];
-
-      querySnapshot.forEach((doc) => todos.push(doc.data()));
-
-      setResultados(todos);
-      setModalVisible(true);
-    } catch (error) {
-      console.error('Erro ao carregar termos:', error);
-    }
-  };
-
-  return (
-    <LinearGradient
-      colors={['#04092B', '#0D1F4F', '#144070']}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={styles.gradient}
-    >
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.container}>
-          <Header />
-
-          <View
-            style={[
-              styles.content,
-              isMobile && styles.contentMobile,
-              isTablet && styles.contentTablet,
-            ]}
-          >
-            <View
-              style={[
-                styles.titleContainer,
-                isMobile && styles.titleContainerMobile,
-              ]}
-            >
-              <Text
-                style={[styles.title, isMobile && styles.titleMobile]}
-              >
-                Aprenda tecnologia{'\n'}
-                <Text style={styles.highlight}>
-                  sem complicação
-                </Text>
-              </Text>
-            </View>
-
-            <Text
-              style={[
-                styles.subtitle,
-                isMobile && styles.subtitleMobile,
-              ]}
-            >
-              Explore termos técnicos de forma simples,
-              rápida e prática.
-            </Text>
-
-            <View style={styles.inputContainer}>
-              <Image
-                source={require('../../assets/images/lupa.png')}
-                style={styles.inputIcon}
-              />
-
-              <TextInput
-                placeholder="Digite o termo..."
-                placeholderTextColor="rgba(255,255,255,0.3)"
-                style={styles.input}
-                value={busca}
-                onChangeText={setBusca}
-                onSubmitEditing={buscarTermo}
-              />
-
-              <Pressable
-                onPress={buscarTermo}
-                style={styles.searchArrow}
-              >
-                <Text style={styles.searchArrowText}>→</Text>
-              </Pressable>
-            </View>
-
-            <Pressable
-              style={({ hovered }) => [
-                styles.button,
-                hovered && !isMobile && styles.buttonHover,
-              ]}
-              onPress={abrirDicionarioCompleto}
-            >
-              <Image
-                source={require('../../assets/images/livro.png')}
-                style={styles.buttonIcon}
-              />
-
-              <Text style={styles.buttonText}>
-                Ver dicionário completo
-              </Text>
-            </Pressable>
-          </View>
-
-          <Footer />
+  const [busca,setBusca]=useState(''); const [modalVisible,setModalVisible]=useState(false); const [resultados,setResultados]=useState<any[]>([]); const [loading,setLoading]=useState(false);
+  const {width}=useWindowDimensions(); const mobile=width<720;
+  const carregar=async(todos=false)=>{if(!todos&&!busca.trim())return;setLoading(true);try{const snap=await getDocs(collection(db,'termos'));const termoBusca=busca.trim().toLocaleLowerCase('pt-BR');const lista:any[]=[];snap.forEach(d=>{const data=d.data();if(todos||(typeof data.termo==='string'&&data.termo.toLocaleLowerCase('pt-BR').includes(termoBusca)))lista.push(data)});setResultados(lista);setModalVisible(true)}catch(e){console.error('Erro na busca:',e)}finally{setLoading(false)}};
+  return <View style={s.page}><LinearGradient colors={['#07111F','#0A1C2B','#0C2530']} style={StyleSheet.absoluteFill}/><View style={s.orbOne}/><View style={s.orbTwo}/>
+    <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}><Header/>
+      <View style={[s.hero,mobile&&s.heroMobile]}>
+        <View style={s.copy}><View style={s.eyebrow}><View style={s.pulse}/><Text style={s.eyebrowText}>CONHECIMENTO SEM BARREIRAS</Text></View>
+          <Text style={[s.title,mobile&&s.titleMobile]}>Tecnologia em{'\n'}<Text style={s.accent}>palavras simples.</Text></Text>
+          <Text style={[s.subtitle,mobile&&s.subtitleMobile]}>Encontre definições claras para os termos que movem o mundo digital. Sem jargões, sem complicação.</Text>
+          <View style={s.search}><Ionicons name="search" size={21} color={colors.textMuted}/><TextInput value={busca} onChangeText={setBusca} onSubmitEditing={()=>carregar()} placeholder="O que você quer entender?" placeholderTextColor={colors.textMuted} style={s.input} returnKeyType="search"/><Pressable accessibilityLabel="Buscar" onPress={()=>carregar()} style={({hovered,pressed})=>[s.searchBtn,hovered&&s.searchHover,pressed&&s.pressed]}>{loading?<ActivityIndicator color="#06251B"/>:<Ionicons name="arrow-forward" size={21} color="#06251B"/>}</Pressable></View>
+          <View style={s.actions}><Pressable onPress={()=>carregar(true)} style={({hovered,pressed})=>[s.primary,hovered&&s.primaryHover,pressed&&s.pressed]}><Ionicons name="book-outline" size={18} color="#06251B"/><Text style={s.primaryText}>Explorar dicionário</Text></Pressable><Text style={s.hint}>Busque por IA, cloud, API...</Text></View>
         </View>
-      </ScrollView>
-
-      <ModalScreen
-        visible={modalVisible}
-        onClose={() => setModalVisible(false)}
-        termos={resultados}
-      />
-    </LinearGradient>
-  );
+        {!mobile&&<View style={s.visual}><View style={s.codeCard}><View style={s.codeTop}><View style={s.windowDots}><View style={[s.windowDot,{backgroundColor:'#FF7185'}]}/><View style={[s.windowDot,{backgroundColor:'#FFCA6A'}]}/><View style={[s.windowDot,{backgroundColor:colors.primary}]}/></View><Text style={s.file}>dicionario.tech</Text></View><View style={s.codeBody}><Text style={s.line}><Text style={s.muted}>01  </Text><Text style={s.blue}>const </Text><Text style={s.light}>tecnologia = </Text><Text style={s.green}>&apos;para todos&apos;</Text><Text style={s.light}>;</Text></Text><Text style={s.line}><Text style={s.muted}>02  </Text></Text><Text style={s.line}><Text style={s.muted}>03  </Text><Text style={s.blue}>function </Text><Text style={s.light}>entender(</Text><Text style={s.green}>termo</Text><Text style={s.light}>) {'{'}</Text></Text><Text style={s.line}><Text style={s.muted}>04    </Text><Text style={s.blue}>return </Text><Text style={s.green}>&apos;simples e claro&apos;</Text><Text style={s.light}>;</Text></Text><Text style={s.line}><Text style={s.muted}>05  </Text><Text style={s.light}>{'}'}</Text></Text></View></View><View style={s.floatBadge}><Ionicons name="sparkles" color={colors.primary} size={18}/><View><Text style={s.floatStrong}>Aprenda no seu ritmo</Text><Text style={s.floatSub}>Conteúdo direto ao ponto</Text></View></View></View>}
+      </View>
+      <View style={s.features}><View style={s.feature}><Ionicons name="flash-outline" size={20} color={colors.primary}/><View><Text style={s.featureTitle}>Rápido</Text><Text style={s.featureText}>Encontre em segundos</Text></View></View><View style={s.separator}/><View style={s.feature}><Ionicons name="chatbubble-ellipses-outline" size={20} color={colors.blue}/><View><Text style={s.featureTitle}>Acessível</Text><Text style={s.featureText}>Explicações sem jargões</Text></View></View><View style={s.separator}/><View style={s.feature}><Ionicons name="people-outline" size={20} color={colors.warning}/><View><Text style={s.featureTitle}>Colaborativo</Text><Text style={s.featureText}>Construído com a comunidade</Text></View></View></View>
+      <Footer/>
+    </ScrollView><ModalScreen visible={modalVisible} onClose={()=>setModalVisible(false)} termos={resultados}/>
+  </View>;
 }
-
-const styles = StyleSheet.create({
-  gradient: {
-    flex: 1,
-    minHeight: '100vh',
-  },
-
-  scroll: {
-    flexGrow: 1,
-  },
-
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    minHeight: '100%',
-  },
-
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'flex-start',
-    width: '40%',
-    paddingHorizontal: 24,
-    paddingVertical: 60,
-  },
-
-  contentTablet: {
-    width: '65%',
-  },
-
-  contentMobile: {
-    width: '100%',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 40,
-  },
-
-  titleContainer: {
-    marginBottom: 12,
-  },
-
-  titleContainerMobile: {
-    alignItems: 'center',
-  },
-
-  title: {
-    fontSize: 52,
-    fontWeight: '700',
-    color: '#fff',
-    lineHeight: 62,
-    textAlign: 'left',
-  },
-
-  titleMobile: {
-    fontSize: 34,
-    lineHeight: 42,
-    textAlign: 'center',
-  },
-
-  highlight: {
-    color: '#5B8AF0',
-  },
-
-  subtitle: {
-    fontSize: 16,
-    color: 'rgba(255,255,255,0.55)',
-    maxWidth: 520,
-    lineHeight: 26,
-    marginBottom: 36,
-  },
-
-  subtitleMobile: {
-    textAlign: 'center',
-    fontSize: 14,
-    lineHeight: 22,
-    marginBottom: 28,
-  },
-
-  inputContainer: {
-    width: '100%',
-    maxWidth: 550,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderRadius: 14,
-    borderWidth: 0.5,
-    borderColor: 'rgba(255,255,255,0.12)',
-    paddingHorizontal: 14,
-    marginBottom: 14,
-  },
-
-  inputIcon: {
-    width: 18,
-    height: 18,
-    opacity: 0.5,
-    marginRight: 10,
-  },
-
-  input: {
-    flex: 1,
-    paddingVertical: 16,
-    color: '#fff',
-    fontSize: 14,
-  },
-
-  searchArrow: {
-    paddingLeft: 10,
-  },
-
-  searchArrowText: {
-    color: '#5B8AF0',
-    fontSize: 22,
-    fontWeight: '300',
-  },
-
-  button: {
-    width: '100%',
-    maxWidth: 550,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#5B8AF0',
-    paddingVertical: 16,
-    paddingHorizontal: 28,
-    borderRadius: 14,
-    gap: 8,
-  },
-
-  buttonHover: {
-    backgroundColor: 'rgba(91,138,240,0.85)',
-    transform: [{ scale: 1.02 }],
-    transitionDuration: '0.3s',
-  },
-
-  buttonIcon: {
-    width: 18,
-    height: 18,
-    tintColor: '#fff',
-  },
-
-  buttonText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 14,
-  },
+const s=StyleSheet.create({
+ page:{flex:1,backgroundColor:colors.background},scroll:{flexGrow:1},orbOne:{position:'absolute',width:480,height:480,borderRadius:240,backgroundColor:'rgba(50,214,160,.05)',top:-180,right:-100},orbTwo:{position:'absolute',width:350,height:350,borderRadius:175,backgroundColor:'rgba(101,167,255,.045)',bottom:120,left:-160},
+ hero:{width:'100%',maxWidth:1180,alignSelf:'center',minHeight:570,paddingHorizontal:24,paddingVertical:68,flexDirection:'row',alignItems:'center',gap:72},heroMobile:{minHeight:550,paddingVertical:58},copy:{flex:1,zIndex:2},eyebrow:{flexDirection:'row',alignItems:'center',gap:9,marginBottom:20},pulse:{width:8,height:8,borderRadius:4,backgroundColor:colors.primary},eyebrowText:{color:colors.primary,fontSize:10,fontWeight:'800',letterSpacing:1.6},title:{color:colors.text,fontSize:58,lineHeight:64,fontWeight:'900',letterSpacing:-2.2},titleMobile:{fontSize:39,lineHeight:45,letterSpacing:-1.3,textAlign:'center'},accent:{color:colors.primary},subtitle:{color:colors.textSecondary,fontSize:17,lineHeight:28,maxWidth:590,marginTop:22,marginBottom:30},subtitleMobile:{fontSize:15,lineHeight:24,textAlign:'center'},search:{height:64,maxWidth:610,flexDirection:'row',alignItems:'center',gap:12,backgroundColor:'rgba(16,31,50,.88)',borderWidth:1,borderColor:'rgba(170,202,230,.2)',borderRadius:18,paddingLeft:18,paddingRight:7},input:{flex:1,color:colors.text,fontSize:15,outlineStyle:'none'} as any,searchBtn:{width:50,height:50,borderRadius:14,backgroundColor:colors.primary,alignItems:'center',justifyContent:'center'},searchHover:{backgroundColor:'#57E5B5'},actions:{flexDirection:'row',alignItems:'center',gap:18,marginTop:18,flexWrap:'wrap'},primary:{height:48,borderRadius:14,paddingHorizontal:18,backgroundColor:colors.primary,flexDirection:'row',alignItems:'center',gap:9},primaryHover:{transform:[{translateY:-2}]},primaryText:{color:'#06251B',fontSize:13,fontWeight:'800'},hint:{color:colors.textMuted,fontSize:11},pressed:{opacity:.75},
+ visual:{width:420,height:360,justifyContent:'center'},codeCard:{backgroundColor:'rgba(13,29,45,.93)',borderRadius:22,borderWidth:1,borderColor:colors.border,overflow:'hidden',transform:[{rotate:'2deg'}],shadowColor:'#000',shadowOpacity:.35,shadowRadius:35,shadowOffset:{width:0,height:22}},codeTop:{height:50,backgroundColor:'rgba(255,255,255,.025)',borderBottomWidth:1,borderBottomColor:colors.border,flexDirection:'row',alignItems:'center',paddingHorizontal:17},windowDots:{flexDirection:'row',gap:7},windowDot:{width:9,height:9,borderRadius:5},file:{color:colors.textMuted,fontSize:10,marginLeft:'auto',marginRight:'auto'},codeBody:{padding:28,gap:12},line:{fontFamily:'monospace',fontSize:13},muted:{color:'#40536A'},blue:{color:colors.blue},green:{color:colors.primary},light:{color:'#D9E5F2'},floatBadge:{position:'absolute',left:-26,bottom:22,backgroundColor:colors.surfaceRaised,borderWidth:1,borderColor:colors.border,borderRadius:16,padding:14,flexDirection:'row',alignItems:'center',gap:10,shadowColor:'#000',shadowOpacity:.3,shadowRadius:20},floatStrong:{color:colors.text,fontSize:12,fontWeight:'700'},floatSub:{color:colors.textMuted,fontSize:10,marginTop:2},
+ features:{width:'100%',maxWidth:1000,alignSelf:'center',paddingHorizontal:24,paddingVertical:30,marginBottom:64,borderTopWidth:1,borderBottomWidth:1,borderColor:colors.border,flexDirection:'row',justifyContent:'space-around',alignItems:'center',flexWrap:'wrap',gap:20},feature:{flexDirection:'row',alignItems:'center',gap:12,minWidth:180},featureTitle:{color:colors.text,fontSize:13,fontWeight:'700'},featureText:{color:colors.textMuted,fontSize:11,marginTop:3},separator:{width:1,height:32,backgroundColor:colors.border}
 });

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, TextInput, Button, Alert } from 'react-native';
 
-import { db } from '../services/firebaseConfig';
+import { db } from '../backend/firebaseconfig';
 import { collection, addDoc } from 'firebase/firestore';
 
 export default function SugestaoScreen() {

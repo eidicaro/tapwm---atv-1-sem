@@ -138,19 +138,20 @@ export default function ModalScreen({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.75)',
+    backgroundColor: 'rgba(2,8,15,0.82)',
     justifyContent: 'center',
     alignItems: 'center',
   },
 
   modal: {
-    width: '88%',
+    width: '92%',
+    maxWidth: 760,
     maxHeight: '82%',
-    backgroundColor: '#0D1B3E',
-    borderRadius: 20,
-    padding: 20,
-    borderWidth: 0.5,
-    borderColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: '#101F32',
+    borderRadius: 24,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(170,202,230,0.16)',
   },
 
   modalHeader: {
@@ -200,7 +201,7 @@ const styles = StyleSheet.create({
   },
 
   letterTitle: {
-    color: '#5B8AF0',
+    color: '#32D6A0',
     fontSize: 18,
     fontWeight: '700',
     marginRight: 10,
@@ -226,7 +227,7 @@ const styles = StyleSheet.create({
 
   cardAccent: {
     width: 3,
-    backgroundColor: '#5B8AF0',
+    backgroundColor: '#32D6A0',
   },
 
   cardContent: {
@@ -273,14 +274,14 @@ const styles = StyleSheet.create({
   },
 
   closeButton: {
-    backgroundColor: '#5B8AF0',
+    backgroundColor: '#32D6A0',
     paddingVertical: 13,
     borderRadius: 12,
     alignItems: 'center',
   },
 
   closeText: {
-    color: '#fff',
+    color: '#06251B',
     fontWeight: '600',
     fontSize: 14,
   },
