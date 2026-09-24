@@ -13,6 +13,8 @@ import Header from './header';
 
 export { default } from '../src/components/AdminDashboard';
 
+// Mantido temporariamente para facilitar a comparação durante a migração visual.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function LegacyAdminScreen() {
   const router = useRouter();
 
@@ -354,14 +356,14 @@ const styles = StyleSheet.create({
 
   greetingSub: {
     color: 'rgba(255,255,255,0.35)',
-    fontSize: 13,
+    fontSize: 14,
     marginBottom: 28,
     lineHeight: 20,
   },
 
   sectionLabel: {
     color: 'rgba(255,255,255,0.25)',
-    fontSize: 11,
+    fontSize: 14,
     letterSpacing: 0.07,
     textTransform: 'uppercase',
     marginBottom: 10,
@@ -403,7 +405,7 @@ const styles = StyleSheet.create({
 
   actionDesc: {
     color: 'rgba(255,255,255,0.3)',
-    fontSize: 12,
+    fontSize: 14,
     marginTop: 2,
   },
 
@@ -416,7 +418,7 @@ const styles = StyleSheet.create({
 
   badgeText: {
     color: '#E24B4A',
-    fontSize: 11,
+    fontSize: 14,
     fontWeight: '600',
   },
 
@@ -478,7 +480,7 @@ const styles = StyleSheet.create({
 
   modalCloseTxt: {
     color: 'rgba(255,255,255,0.5)',
-    fontSize: 13,
+    fontSize: 14,
   },
 
   card: {
@@ -500,7 +502,7 @@ const styles = StyleSheet.create({
 
   cardText: {
     color: 'rgba(255,255,255,0.45)',
-    fontSize: 12,
+    fontSize: 14,
     lineHeight: 18,
   },
 
@@ -512,7 +514,7 @@ const styles = StyleSheet.create({
 
   inputLabel: {
     color: 'rgba(255,255,255,0.4)',
-    fontSize: 12,
+    fontSize: 14,
     marginBottom: 6,
     marginLeft: 2,
   },
@@ -530,7 +532,7 @@ const styles = StyleSheet.create({
 
   editingTermLabel: {
     color: 'rgba(255,255,255,0.4)',
-    fontSize: 13,
+    fontSize: 14,
     marginBottom: 16,
     fontWeight: '500',
     textTransform: 'capitalize',
@@ -589,13 +591,13 @@ const styles = StyleSheet.create({
   btnText: {
     color: '#fff',
     fontWeight: '600',
-    fontSize: 12,
+    fontSize: 14,
   },
 
   emptyTxt: {
     color: 'rgba(255,255,255,0.3)',
     textAlign: 'center',
     marginTop: 32,
-    fontSize: 13,
+    fontSize: 14,
   },
 });
