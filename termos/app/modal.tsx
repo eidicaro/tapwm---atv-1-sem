@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,10 @@ import {
   Modal,
   Pressable,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import * as Speech from 'expo-speech';
+import { useAppTheme } from '../src/context/ThemeContext';
+import { AppColors } from './theme';
 
 type Termo = {
   termo: string;
@@ -24,6 +28,22 @@ export default function ModalScreen({
   onClose,
   termos,
 }: Props) {
+  const { colors } = useAppTheme();
+  const styles = makeStyles(colors);
+  const [speaking, setSpeaking] = useState<string | null>(null);
+
+  const ouvir = async (termo: string) => {
+    await Speech.stop();
+    setSpeaking(termo);
+    Speech.speak(termo, {
+      language: 'pt-BR',
+      rate: 0.82,
+      pitch: 1,
+      onDone: () => setSpeaking(null),
+      onStopped: () => setSpeaking(null),
+      onError: () => setSpeaking(null),
+    });
+  };
 
   // Ordena alfabeticamente
   const termosOrdenados = [...termos].sort((a, b) =>
@@ -93,9 +113,12 @@ export default function ModalScreen({
                       <View style={styles.cardAccent} />
 
                       <View style={styles.cardContent}>
-                        <Text style={styles.term}>
-                          {item.termo}
-                        </Text>
+                        <View style={styles.termRow}><Text style={styles.term}>{item.termo}</Text>
+                          <Pressable accessibilityRole="button" accessibilityLabel={`Ouvir pronúncia de ${item.termo}`} onPress={() => ouvir(item.termo)} style={({pressed})=>[styles.audioButton, speaking === item.termo && styles.audioButtonActive, pressed && styles.pressed]}>
+                            <Ionicons name={speaking === item.termo ? 'volume-high' : 'volume-medium-outline'} size={19} color={speaking === item.termo ? colors.primaryText : colors.primary}/>
+                            <Text style={[styles.audioText, speaking === item.termo && styles.audioTextActive]}>{speaking === item.termo ? 'Ouvindo' : 'Ouvir'}</Text>
+                          </Pressable>
+                        </View>
 
                         <Text style={styles.desc}>
                           {item.descricao}
@@ -135,10 +158,10 @@ export default function ModalScreen({
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: AppColors) => StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(2,8,15,0.82)',
+    backgroundColor: colors.overlay,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -147,11 +170,11 @@ const styles = StyleSheet.create({
     width: '92%',
     maxWidth: 760,
     maxHeight: '82%',
-    backgroundColor: '#101F32',
+    backgroundColor: colors.surface,
     borderRadius: 24,
     padding: 24,
     borderWidth: 1,
-    borderColor: 'rgba(170,202,230,0.16)',
+    borderColor: colors.border,
   },
 
   modalHeader: {
@@ -162,7 +185,7 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    color: '#fff',
+    color: colors.text,
     fontSize: 20,
     fontWeight: '600',
   },
@@ -171,19 +194,19 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: 9,
-    backgroundColor: 'rgba(255,255,255,0.07)',
+    backgroundColor: colors.backgroundSoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
 
   closeIconText: {
-    color: 'rgba(255,255,255,0.5)',
-    fontSize: 13,
+    color: colors.textSecondary,
+    fontSize: 16,
   },
 
   counter: {
-    color: 'rgba(255,255,255,0.3)',
-    fontSize: 11,
+    color: colors.textMuted,
+    fontSize: 14,
     marginBottom: 14,
   },
 
@@ -201,7 +224,7 @@ const styles = StyleSheet.create({
   },
 
   letterTitle: {
-    color: '#32D6A0',
+    color: colors.primary,
     fontSize: 18,
     fontWeight: '700',
     marginRight: 10,
@@ -210,24 +233,24 @@ const styles = StyleSheet.create({
   letterLine: {
     flex: 1,
     height: 1,
-    backgroundColor: 'rgba(255,255,255,0.12)',
+    backgroundColor: colors.border,
   },
 
   // ===== CARDS =====
 
   card: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    backgroundColor: colors.surfaceRaised,
     borderRadius: 12,
     marginBottom: 8,
     overflow: 'hidden',
     borderWidth: 0.5,
-    borderColor: 'rgba(255,255,255,0.07)',
+    borderColor: colors.border,
   },
 
   cardAccent: {
     width: 3,
-    backgroundColor: '#32D6A0',
+    backgroundColor: colors.primary,
   },
 
   cardContent: {
@@ -236,17 +259,23 @@ const styles = StyleSheet.create({
   },
 
   term: {
-    color: '#fff',
+    color: colors.text,
     fontWeight: '600',
     fontSize: 14,
-    marginBottom: 4,
     textTransform: 'capitalize',
   },
 
+  termRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 8 },
+  audioButton: { minHeight: 40, paddingHorizontal: 12, borderRadius: 12, borderWidth: 1, borderColor: colors.border, flexDirection: 'row', alignItems: 'center', gap: 6 },
+  audioButtonActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  audioText: { color: colors.primary, fontSize: 14, fontWeight: '800' },
+  audioTextActive: { color: colors.primaryText },
+  pressed: { opacity: .7 },
+
   desc: {
-    color: 'rgba(255,255,255,0.5)',
-    fontSize: 12,
-    lineHeight: 18,
+    color: colors.textSecondary,
+    fontSize: 15,
+    lineHeight: 23,
   },
 
   emptyState: {
@@ -260,28 +289,28 @@ const styles = StyleSheet.create({
   },
 
   empty: {
-    color: 'rgba(255,255,255,0.5)',
+    color: colors.textSecondary,
     fontSize: 14,
     fontWeight: '500',
     marginBottom: 6,
   },
 
   emptySub: {
-    color: 'rgba(255,255,255,0.25)',
-    fontSize: 12,
+    color: colors.textMuted,
+    fontSize: 14,
     textAlign: 'center',
     lineHeight: 18,
   },
 
   closeButton: {
-    backgroundColor: '#32D6A0',
+    backgroundColor: colors.primary,
     paddingVertical: 13,
     borderRadius: 12,
     alignItems: 'center',
   },
 
   closeText: {
-    color: '#06251B',
+    color: colors.primaryText,
     fontWeight: '600',
     fontSize: 14,
   },

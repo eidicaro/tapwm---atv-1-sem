@@ -1,8 +1,12 @@
 import { View, Text, Image, StyleSheet, useWindowDimensions, Pressable } from 'react-native';
+import { useAppTheme } from '../src/context/ThemeContext';
+import { AppColors } from './theme';
 
 export default function Footer() {
   const { width } = useWindowDimensions();
   const isMobile = width < 768;
+  const { colors, isDark } = useAppTheme();
+  const styles = makeStyles(colors);
 
   return (
     <View style={[styles.container, isMobile && styles.containerMobile]}>
@@ -33,19 +37,19 @@ export default function Footer() {
           <Pressable style={ ({hovered}) => [styles.socialBtn, hovered && styles.buttonHover]}>
             <Image
               source={require('../assets/images/linkedin.png')}
-              style={styles.icon}
+              style={[styles.icon, !isDark && styles.iconLight]}
             />
           </Pressable>
           <Pressable style={ ({hovered}) => [styles.socialBtn, hovered && styles.buttonHover]}>
             <Image
               source={require('../assets/images/instagram.png')}
-              style={styles.icon}
+              style={[styles.icon, !isDark && styles.iconLight]}
             />
           </Pressable>
           <Pressable style={ ({hovered}) => [styles.socialBtn, hovered && styles.buttonHover]}>
             <Image
               source={require('../assets/images/facebook.png')}
-              style={styles.icon}
+              style={[styles.icon, !isDark && styles.iconLight]}
             />
           </Pressable>
         </View>
@@ -55,17 +59,17 @@ export default function Footer() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (colors: AppColors) => StyleSheet.create({
   container: {
     width: '100%',
-    backgroundColor: '#080C15',
+    backgroundColor: colors.surface,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 28,
     paddingHorizontal: 40,
     borderTopWidth: 0.5,
-    borderTopColor: 'rgba(255,255,255,0.07)',
+    borderTopColor: colors.border,
   },
 
   containerMobile: {
@@ -99,27 +103,27 @@ const styles = StyleSheet.create({
   },
 
   subtitle: {
-    color: '#5B8AF0',
-    fontSize: 13,
+    color: colors.blue,
+    fontSize: 14,
     fontWeight: '500',
     opacity: 0.85,
   },
 
   subtitleMobile: {
     textAlign: 'center',
-    fontSize: 12,
+    fontSize: 14,
   },
 
   dividerVertical: {
     width: 0.5,
     height: 50,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: colors.border,
   },
 
   dividerHorizontal: {
     width: '100%',
     height: 0.5,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: colors.border,
     marginBottom: 16,
   },
 
@@ -133,8 +137,8 @@ const styles = StyleSheet.create({
   },
 
   contactLabel: {
-    color: 'rgba(255,255,255,0.45)',
-    fontSize: 12,
+    color: colors.textMuted,
+    fontSize: 14,
     marginBottom: 10,
     letterSpacing: 0.3,
   },
@@ -148,9 +152,9 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: colors.backgroundSoft,
     borderWidth: 0.5,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -160,10 +164,11 @@ const styles = StyleSheet.create({
     height: 18,
     opacity: 0.7,
   },
+  iconLight: { tintColor: colors.text },
 
   buttonHover: {
-    backgroundColor: 'rgba(91,138,240,0.15)',
-    borderColor: 'rgba(91,138,240,0.5)',
+    backgroundColor: colors.successSoft,
+    borderColor: colors.primary,
     transitionDuration: '0.2s',
   }
 });

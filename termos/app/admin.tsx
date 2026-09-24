@@ -11,7 +11,9 @@ import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from 'firebase
 import { LinearGradient } from 'expo-linear-gradient';
 import Header from './header';
 
-export default function AdminScreen() {
+export { default } from '../src/components/AdminDashboard';
+
+function LegacyAdminScreen() {
   const router = useRouter();
 
   const [sugestoes, setSugestoes] = useState<any[]>([]);
