@@ -1,9 +1,36 @@
+import { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Pressable, useWindowDimensions } from 'react-native';
-import { Link, usePathname } from 'expo-router';
+import { Link, usePathname, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppTheme } from '../src/context/ThemeContext';
 import { AppColors } from './theme';
 export default function Header() {
+  const router = useRouter();
+  const logoClicks = useRef(0);
+  const logoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => {
+    if (logoTimer.current !== null) clearTimeout(logoTimer.current);
+  }, []);
+
+  const handleLogoPress = () => {
+    if (logoTimer.current !== null) clearTimeout(logoTimer.current);
+    logoClicks.current += 1;
+
+    if (logoClicks.current === 3) {
+      logoClicks.current = 0;
+      logoTimer.current = null;
+      router.push('/admin');
+      return;
+    }
+
+    // Aguarda os próximos cliques antes de voltar ao início.
+    logoTimer.current = setTimeout(() => {
+      logoClicks.current = 0;
+      logoTimer.current = null;
+      router.navigate('/');
+    }, 600);
+  };
   const { width } = useWindowDimensions(); const path = usePathname(); const mobile = width < 680;
   const { colors, isDark, toggleTheme } = useAppTheme(); const s = makeStyles(colors);
   const Item = ({ href, label, icon }: { href: '/' | '/sugestao'; label: string; icon: keyof typeof Ionicons.glyphMap }) => {
@@ -12,7 +39,7 @@ export default function Header() {
       <Ionicons name={icon} size={19} color={active ? colors.primary : colors.textSecondary} />{!mobile && <Text style={[s.link, active && s.linkActive]}>{label}</Text>}
     </Pressable></Link>;
   };
-  return <View style={s.shell}><View style={s.inner}><Link href="/" asChild><Pressable style={s.brand}><View style={s.mark}><Ionicons name="code-slash" size={21} color={colors.primaryText}/></View><View><Text style={s.name}>Dicionário Tech</Text>{!mobile && <Text style={s.by}>LAR SÃO FRANCISCO</Text>}</View></Pressable></Link><View style={s.nav}><Item href="/" label="Início" icon="home-outline" /><Item href="/sugestao" label="Sugerir termo" icon="bulb-outline" /><Pressable accessibilityLabel={`Ativar modo ${isDark?'claro':'escuro'}`} onPress={toggleTheme} style={({hovered,pressed})=>[s.themeButton,hovered&&s.hover,pressed&&s.pressed]}><Ionicons name={isDark?'sunny-outline':'moon-outline'} size={21} color={colors.text}/>{!mobile&&<Text style={s.themeText}>{isDark?'Claro':'Escuro'}</Text>}</Pressable></View></View></View>;
+  return <View style={s.shell}><View style={s.inner}><Pressable accessibilityRole="button" accessibilityLabel="Dicionário Tech" onPress={handleLogoPress} style={s.brand}><View style={s.mark}><Ionicons name="code-slash" size={21} color={colors.primaryText}/></View><View><Text style={s.name}>Dicionário Tech</Text>{!mobile && <Text style={s.by}>LAR SÃO FRANCISCO</Text>}</View></Pressable><View style={s.nav}><Item href="/" label="Início" icon="home-outline" /><Item href="/sugestao" label="Sugerir termo" icon="bulb-outline" /><Pressable accessibilityLabel={`Ativar modo ${isDark?'claro':'escuro'}`} onPress={toggleTheme} style={({hovered,pressed})=>[s.themeButton,hovered&&s.hover,pressed&&s.pressed]}><Ionicons name={isDark?'sunny-outline':'moon-outline'} size={21} color={colors.text}/>{!mobile&&<Text style={s.themeText}>{isDark?'Claro':'Escuro'}</Text>}</Pressable></View></View></View>;
 }
 const makeStyles = (colors: AppColors) => StyleSheet.create({
   shell: { width: '100%', backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border, zIndex: 20 },
