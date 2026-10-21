@@ -7,6 +7,7 @@ import { db } from '../backend/firebaseconfig';
 import { useAuth } from '../context/AuthContext';
 import { useAppTheme } from '../context/ThemeContext';
 import { AppColors } from '../../app/theme';
+import { useDictionary } from '../context/DictionaryContext';
 
 type Suggestion = { id: string; termo: string; descricao: string; status?: string };
 type Term = { id: string; termo: string; descricao: string };
@@ -17,6 +18,7 @@ export default function AdminDashboard() {
   const { colors, isDark, toggleTheme } = useAppTheme();
   const { width } = useWindowDimensions();
   const router = useRouter();
+  const { reload: reloadDictionary } = useDictionary();
   const styles = makeStyles(colors);
   const compact = width < 860;
   const [section, setSection] = useState<Section>('suggestions');
@@ -57,7 +59,7 @@ export default function AdminDashboard() {
     try {
       await addDoc(collection(db, 'termos'), { termo: item.termo.trim().toLowerCase(), descricao: item.descricao.trim() });
       await updateDoc(doc(db, 'sugestoes', item.id), { status: 'aprovado' });
-      await loadData();
+      await loadData(); reloadDictionary();
     } catch { Alert.alert('Erro ao aprovar sugestão'); } finally { setBusyId(null); }
   };
 
@@ -74,7 +76,7 @@ export default function AdminDashboard() {
     setBusyId('create');
     try {
       await addDoc(collection(db, 'termos'), { termo: newTerm.trim().toLowerCase(), descricao: newDescription.trim() });
-      setNewTerm(''); setNewDescription(''); await loadData(); setSection('terms');
+      setNewTerm(''); setNewDescription(''); await loadData(); reloadDictionary(); setSection('terms');
     } catch { Alert.alert('Erro ao criar termo'); } finally { setBusyId(null); }
   };
 
@@ -83,7 +85,7 @@ export default function AdminDashboard() {
     setBusyId(editing.id);
     try {
       await updateDoc(doc(db, 'termos', editing.id), { descricao: editDescription.trim() });
-      setEditing(null); setEditDescription(''); await loadData();
+      setEditing(null); setEditDescription(''); await loadData(); reloadDictionary();
     } catch { Alert.alert('Erro ao salvar alteração'); } finally { setBusyId(null); }
   };
 
@@ -91,7 +93,7 @@ export default function AdminDashboard() {
     { text: 'Cancelar', style: 'cancel' },
     { text: 'Remover', style: 'destructive', onPress: async () => {
       setBusyId(item.id);
-      try { await deleteDoc(doc(db, 'termos', item.id)); setTerms((current) => current.filter((value) => value.id !== item.id)); }
+      try { await deleteDoc(doc(db, 'termos', item.id)); reloadDictionary(); setTerms((current) => current.filter((value) => value.id !== item.id)); }
       catch { Alert.alert('Erro ao remover termo'); } finally { setBusyId(null); }
     } },
   ]);

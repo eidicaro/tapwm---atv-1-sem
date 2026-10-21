@@ -1,131 +1,43 @@
-import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { useState } from 'react';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { collection, getDocs } from 'firebase/firestore';
-import * as Speech from 'expo-speech';
-import { db } from '../backend/firebaseconfig';
+import { useRouter } from 'expo-router';
+import { useDictionary } from '../context/DictionaryContext';
+import { useAudio } from '../context/AudioContext';
 import { useAppTheme } from '../context/ThemeContext';
-import { AppColors } from '../../app/theme';
+import { filterCatalog, summarize } from '../lib/dictionary';
 
-type Term = { id: string; termo: string; descricao: string };
-
-export default function TermGrid({ active }: { active: boolean }) {
+export default function TermGrid({ query = '' }: { active?: boolean; query?: string }) {
+  const { terms, loading, error, reload } = useDictionary();
+  const { speaking, listen, error: audioError } = useAudio();
   const { colors } = useAppTheme();
-  const styles = makeStyles(colors);
+  const router = useRouter();
   const { width } = useWindowDimensions();
+  const [letter, setLetter] = useState('');
+  const [descending, setDescending] = useState(false);
+  const [visible, setVisible] = useState(12);
   const columns = width >= 1000 ? 4 : width >= 600 ? 2 : 1;
   const cardWidth = (Math.min(width, 1180) - 48 - (columns - 1) * 16) / columns;
-  const [terms, setTerms] = useState<Term[]>([]);
-  const [visibleRows, setVisibleRows] = useState(3);
-  const visibleTerms = terms.slice(0, visibleRows * columns);
-  const hasMore = visibleTerms.length < terms.length;
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-  const [retry, setRetry] = useState(0);
-  const [speaking, setSpeaking] = useState<string | null>(null);
-  const [audioError, setAudioError] = useState(false);
-  const playback = useRef(0);
-  const currentTerm = useRef<string | null>(null);
-
-  useEffect(() => {
-    let mounted = true;
-    setLoading(true);
-    setError(false);
-    getDocs(collection(db, 'termos'))
-      .then(snapshot => {
-        const items: Term[] = [];
-        snapshot.forEach(document => {
-          const data = document.data();
-          if (typeof data.termo === 'string' && typeof data.descricao === 'string') {
-            items.push({ id: document.id, termo: data.termo, descricao: data.descricao });
-          }
-        });
-        if (mounted) setTerms(items.sort((a, b) => a.termo.localeCompare(b.termo, 'pt-BR')));
-      })
-      .catch(() => { if (mounted) setError(true); })
-      .finally(() => { if (mounted) setLoading(false); });
-    return () => { mounted = false; };
-  }, [retry]);
-
-  useEffect(() => {
-    if (!active) {
-      playback.current += 1;
-      currentTerm.current = null;
-      setSpeaking(null);
-      void Speech.stop();
-    }
-    return () => {
-      playback.current += 1;
-      currentTerm.current = null;
-      void Speech.stop();
-    };
-  }, [active]);
-
-  const listen = async (term: Term) => {
-    const stopOnly = currentTerm.current === term.id;
-    const request = ++playback.current;
-    currentTerm.current = stopOnly ? null : term.id;
-    setSpeaking(currentTerm.current);
-    setAudioError(false);
-    const finish = () => {
-      if (request !== playback.current) return;
-      currentTerm.current = null;
-      setSpeaking(null);
-    };
-    try {
-      await Speech.stop();
-      if (request !== playback.current || stopOnly) return;
-      Speech.speak(`${term.termo}. ${term.descricao}`, {
-        language: 'pt-BR', rate: 0.82, pitch: 1,
-        onDone: finish, onStopped: finish,
-        onError: () => { if (request === playback.current) { finish(); setAudioError(true); } },
-      });
-    } catch {
-      if (request === playback.current) { finish(); setAudioError(true); }
-    }
-  };
-
-  return <View style={styles.section}>
-    <Text accessibilityRole="header" style={styles.heading}>Explore os termos</Text>
-    <Text style={styles.subtitle}>Conheça os conceitos e ouça cada explicação.</Text>
-    {loading ? <View style={styles.message}><ActivityIndicator color={colors.primary}/><Text style={styles.messageText}>Carregando termos...</Text></View>
-      : error ? <View style={styles.message}><Text style={styles.messageText}>Não foi possível carregar os termos.</Text><Pressable accessibilityRole="button" onPress={() => setRetry(value => value + 1)} style={styles.audioButton}><Text style={styles.audioText}>Tentar novamente</Text></Pressable></View>
-      : terms.length === 0 ? <Text style={styles.messageText}>Nenhum termo cadastrado ainda.</Text>
-      : <View style={styles.grid}>{visibleTerms.map(term => <View key={term.id} style={[styles.card, { width: cardWidth }]}>
-        <Text accessibilityRole="header" style={styles.term}>{term.termo}</Text>
-        <Text style={styles.description}>{term.descricao}</Text>
-        <Pressable accessibilityRole="button" accessibilityLabel={`${speaking === term.id ? 'Parar' : 'Ouvir'} explicação de ${term.termo}`} onPress={() => listen(term)} style={({ hovered, pressed }) => [styles.audioButton, hovered && styles.audioHover, pressed && styles.pressed]}>
-          <Ionicons name={speaking === term.id ? 'stop-circle-outline' : 'volume-medium-outline'} size={20} color={colors.primary}/>
-          <Text style={styles.audioText}>{speaking === term.id ? 'Parar áudio' : 'Ouvir explicação'}</Text>
-        </Pressable>
-      </View>)}</View>}
-    {!loading && !error && hasMore && <Pressable
-      accessibilityRole="button"
-      accessibilityLabel="Mostrar mais três linhas de termos"
-      onPress={() => setVisibleRows(rows => rows + 3)}
-      style={({ hovered, pressed }) => [styles.showMore, hovered && styles.audioHover, pressed && styles.pressed]}
-    >
-      <Text style={styles.audioText}>Mostrar mais</Text>
-      <Ionicons name="chevron-down-outline" size={20} color={colors.primary}/>
-    </Pressable>}
-    {audioError && <Text accessibilityRole="alert" style={styles.error}>Não foi possível reproduzir o áudio. Tente novamente.</Text>}
+  const filtered = filterCatalog(terms, query, letter, descending);
+  const s = StyleSheet.create({
+    section: { width: '100%', maxWidth: 1180, alignSelf: 'center', padding: 24, gap: 20 },
+    heading: { color: colors.text, fontSize: 28, fontWeight: '800' },
+    text: { color: colors.textSecondary, fontSize: 15, lineHeight: 24 },
+    row: { flexDirection: 'row', gap: 8, alignItems: 'center' },
+    filter: { minWidth: 44, minHeight: 44, borderWidth: 1, borderColor: colors.border, borderRadius: 11, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 13 },
+    selected: { backgroundColor: colors.primary, borderColor: colors.primary },
+    grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 16 },
+    card: { padding: 20, borderRadius: 18, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, gap: 12 },
+    term: { color: colors.text, fontSize: 20, fontWeight: '800' },
+    actions: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' },
+    button: { minHeight: 44, padding: 12, borderRadius: 12, backgroundColor: colors.successSoft, alignItems: 'center', justifyContent: 'center' },
+    buttonText: { color: colors.primary, fontWeight: '700' },
+    center: { alignItems: 'center', gap: 14, paddingVertical: 24 },
+  });
+  return <View style={s.section}><Text accessibilityRole="header" style={s.heading}>Explore os termos</Text><Text style={s.text}>Conheça os conceitos e ouça cada explicação.</Text>
+    <Pressable accessibilityRole="button" onPress={() => setDescending(value => !value)} style={[s.filter, { alignSelf: 'flex-start' }]}><Text style={s.text}>Ordenação: {descending ? 'Z a A' : 'A a Z'}</Text></Pressable>
+    <ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={s.row}>{['', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'].map(initial => <Pressable key={initial} accessibilityRole="button" accessibilityLabel={initial ? `Termos com a letra ${initial}` : 'Todos os termos'} accessibilityState={{ selected: initial === letter }} onPress={() => { setLetter(initial); setVisible(12); }} style={[s.filter, initial === letter && s.selected]}><Text style={[s.text, initial === letter && { color: colors.primaryText }]}>{initial || `Todos (${terms.length})`}</Text></Pressable>)}</ScrollView>
+    {loading ? <View style={s.center}><ActivityIndicator color={colors.primary} /><Text style={s.text}>Carregando termos…</Text></View> : error ? <View style={s.center}><Text accessibilityRole="alert" style={s.text}>Não foi possível carregar os termos.</Text><Pressable accessibilityRole="button" onPress={reload} style={s.button}><Text style={s.buttonText}>Tentar novamente</Text></Pressable></View> : <><View style={s.grid}>{filtered.slice(0, visible).map(term => <View key={term.id} style={[s.card, { width: cardWidth }]}><Pressable accessibilityRole="link" onPress={() => router.push({ pathname: '/termo', params: { id: term.id } })}><Text accessibilityRole="header" style={s.term}>{term.termo}</Text></Pressable><Text style={s.text}>{summarize(term.descricao)}</Text><View style={s.actions}><Pressable accessibilityRole="button" accessibilityLabel={`${speaking === term.id ? 'Parar' : 'Ouvir'} explicação de ${term.termo}`} onPress={() => void listen(term)} style={s.button}><Ionicons name={speaking === term.id ? 'stop-outline' : 'volume-medium-outline'} size={20} color={colors.primary} /></Pressable><Pressable accessibilityRole="link" accessibilityLabel={`Ler explicação completa de ${term.termo}`} onPress={() => router.push({ pathname: '/termo', params: { id: term.id } })} style={s.button}><Ionicons name="arrow-forward-outline" size={20} color={colors.primary} /></Pressable></View></View>)}</View>{!filtered.length && <View style={s.center}><Text style={s.text}>Nenhum termo encontrado com esse filtro.</Text><Pressable accessibilityRole="link" onPress={() => router.push('/sugestao')} style={s.button}><Text style={s.buttonText}>Sugerir um termo</Text></Pressable></View>}{visible < filtered.length && <Pressable accessibilityRole="button" onPress={() => setVisible(count => count + 12)} style={s.button}><Text style={s.buttonText}>Mostrar mais termos</Text></Pressable>}</>}
+    {!!audioError && <Text accessibilityRole="alert" style={{ color: colors.danger }}>{audioError}</Text>}
   </View>;
 }
-
-const makeStyles = (colors: AppColors) => StyleSheet.create({
-  section: { width: '100%', maxWidth: 1180, alignSelf: 'center', paddingHorizontal: 24, paddingBottom: 64 },
-  heading: { color: colors.text, fontSize: 28, fontWeight: '800' },
-  subtitle: { color: colors.textSecondary, fontSize: 16, lineHeight: 24, marginTop: 8, marginBottom: 28 },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 16 },
-  showMore: { minHeight: 48, alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 28, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 14, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.successSoft },
-  card: { padding: 20, borderRadius: 18, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
-  term: { color: colors.text, fontSize: 20, lineHeight: 27, fontWeight: '800', marginBottom: 12 },
-  description: { color: colors.textSecondary, fontSize: 15, lineHeight: 23, marginBottom: 20, flexGrow: 1 },
-  audioButton: { minHeight: 44, alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingVertical: 10, borderRadius: 12, backgroundColor: colors.successSoft },
-  audioHover: { backgroundColor: colors.backgroundSoft },
-  audioText: { color: colors.primary, fontSize: 14, fontWeight: '700' },
-  pressed: { opacity: 0.7 },
-  message: { paddingVertical: 24, alignItems: 'center', gap: 12 },
-  messageText: { color: colors.textMuted, fontSize: 15, lineHeight: 23 },
-  error: { color: colors.danger, fontSize: 14, marginTop: 16 },
-});

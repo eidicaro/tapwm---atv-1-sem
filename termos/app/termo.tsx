@@ -1,0 +1,1 @@
+export { TermScreen as default } from '../src/components/Experience';
