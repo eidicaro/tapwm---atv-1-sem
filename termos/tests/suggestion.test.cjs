@@ -1,0 +1,41 @@
+const { test } = require('node:test');
+const assert = require('node:assert/strict');
+const { createSuggestionSender } = require('../src/lib/suggestion.ts');
+test('only resolves after a confirmed write and preserves review schema', async () => {
+  let resolveWrite;
+  let payload;
+  const sender = createSuggestionSender(() => 'new-id', (id, data) => { assert.equal(id, 'new-id'); payload = data; return new Promise(resolve => { resolveWrite = resolve; }); });
+  let done = false;
+  const result = sender(' API ', ' Uma explicação válida. ').then(() => { done = true; });
+  await Promise.resolve();
+  assert.equal(done, false);
+  assert.deepEqual(Object.keys(payload).sort(), ['data', 'descricao', 'status', 'termo']);
+  assert.equal(payload.status, 'pendente');
+  assert.equal(payload.termo, 'API');
+  assert.ok(payload.data instanceof Date);
+  resolveWrite(); await result;
+  assert.equal(done, true);
+});
+test('rapid repeated submissions share one pending operation', async () => {
+  let writes = 0;
+  let resolveWrite;
+  const sender = createSuggestionSender(() => 'only-id', () => { writes++; return new Promise(resolve => { resolveWrite = resolve; }); });
+  const first = sender('API', 'Uma explicação válida.');
+  const second = sender('API', 'Uma explicação válida.');
+  assert.equal(first, second);
+  await Promise.resolve();
+  assert.equal(writes, 1);
+  resolveWrite(); await first;
+});
+test('failed writes reject honestly and retries reuse ID and original date', async () => {
+  let allocations = 0;
+  const writes = [];
+  const sender = createSuggestionSender(() => `id-${++allocations}`, async (id, payload) => { writes.push({ id, payload }); if (writes.length === 1) throw new Error('offline'); });
+  await assert.rejects(sender('API', 'Uma explicação válida.'), /offline/);
+  await sender('API', 'Uma explicação válida.');
+  assert.equal(allocations, 1);
+  assert.equal(writes[0].id, writes[1].id);
+  assert.equal(writes[0].payload.data, writes[1].payload.data);
+  await sender('Outro termo', 'Outra explicação válida.');
+  assert.equal(allocations, 2);
+});

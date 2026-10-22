@@ -1,0 +1,186 @@
+const fs = require('node:fs');
+const path = require('node:path');
+const os = require('node:os');
+const { spawn } = require('node:child_process');
+const assert = require('node:assert/strict');
+const artifacts = path.resolve(__dirname, '../.artifacts');
+fs.mkdirSync(artifacts, { recursive: true });
+const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+const chromePath = process.env.CHROME_PATH || 'C:/Program Files/Google/Chrome/Application/chrome.exe';
+const chrome = spawn(chromePath, ['--headless=new', '--remote-debugging-port=9231', `--user-data-dir=${path.join(os.tmpdir(), 'dicionario-tech-qa')}`, '--no-first-run', '--no-default-browser-check', '--disable-gpu', 'about:blank'], { windowsHide: true, stdio: 'ignore' });
+let socket;
+const results = [];
+const errors = [];
+async function main() {
+  for (let attempt = 0; attempt < 60; attempt++) { try { await fetch('http://127.0.0.1:9231/json/version'); break; } catch { await wait(250); } }
+  const target = await (await fetch('http://127.0.0.1:9231/json/new?about:blank', { method: 'PUT' })).json();
+  socket = new WebSocket(target.webSocketDebuggerUrl);
+  await new Promise(resolve => socket.addEventListener('open', resolve, { once: true }));
+  const pending = new Map();
+  let nextId = 0;
+  socket.addEventListener('message', event => {
+    const message = JSON.parse(event.data);
+    if (message.id) { const promise = pending.get(message.id); if (!promise) return; pending.delete(message.id); message.error ? promise.reject(message.error) : promise.resolve(message.result); }
+    if (message.method === 'Runtime.exceptionThrown') errors.push(message.params.exceptionDetails);
+    if (message.method === 'Runtime.consoleAPICalled' && message.params.type === 'error') errors.push(message.params.args.map(item => item.value || item.description));
+  });
+  const cdp = (method, params = {}) => new Promise((resolve, reject) => { const id = ++nextId; pending.set(id, { resolve, reject }); socket.send(JSON.stringify({ id, method, params })); });
+  const evaluate = async expression => { const response = await cdp('Runtime.evaluate', { expression, returnByValue: true, awaitPromise: true }); if (response.exceptionDetails) throw new Error(JSON.stringify(response.exceptionDetails)); return response.result?.value; };
+  const until = async (expression, timeout = 10000) => { const start = Date.now(); while (Date.now() - start < timeout) { if (await evaluate(`Boolean(${expression})`)) return; await wait(150); } throw new Error(`Timed out: ${expression}`); };
+  const check = (name, condition) => { assert.ok(condition, name); results.push({ name, passed: true }); console.log(`PASS ${name}`); };
+  const screenshot = async name => { await wait(250); const shot = await cdp('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }); fs.writeFileSync(path.join(artifacts, name), Buffer.from(shot.data, 'base64')); };
+  const click = async selector => evaluate(`document.querySelector(${JSON.stringify(selector)}).click()`);
+  const input = async (selector, value) => evaluate(`(() => { const el = document.querySelector(${JSON.stringify(selector)}); const proto = el.tagName === 'TEXTAREA' ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype; Object.getOwnPropertyDescriptor(proto, 'value').set.call(el, ${JSON.stringify(value)}); el.dispatchEvent(new Event('input', { bubbles: true })); el.focus(); })()`);
+  const key = async (value, modifiers = 0) => { await cdp('Input.dispatchKeyEvent', { type: 'keyDown', key: value, modifiers }); await cdp('Input.dispatchKeyEvent', { type: 'keyUp', key: value, modifiers }); await wait(100); };
+  const contrastAudit = async () => evaluate(`(() => {
+    const rgb = value => (value.match(/[\\d.]+/g) || []).map(Number);
+    const luminance = color => {
+      const channels = color.slice(0, 3).map(n => { n /= 255; return n <= .04045 ? n / 12.92 : ((n + .055) / 1.055) ** 2.4; });
+      return channels[0] * .2126 + channels[1] * .7152 + channels[2] * .0722;
+    };
+    return ['.hero-copy h1', '.hero-copy h1 em', '.eyebrow', '.hero-description', '.term-card h3 a', '.term-card > p', '.search-examples > span'].map(selector => {
+      const element = document.querySelector(selector), style = getComputedStyle(element);
+      let node = element, background;
+      while (node) { const color = rgb(getComputedStyle(node).backgroundColor); if (color.length === 3 || color[3] > .99) { background = color; break; } node = node.parentElement; }
+      const a = luminance(rgb(style.color)), b = luminance(background || [255, 255, 255]);
+      const ratio = (Math.max(a, b) + .05) / (Math.min(a, b) + .05);
+      const large = parseFloat(style.fontSize) >= 24 || (parseFloat(style.fontSize) >= 18.66 && parseInt(style.fontWeight) >= 700);
+      return { selector, ratio, threshold: large ? 3 : 4.5, font: style.fontFamily };
+    });
+  })()`);
+  await Promise.all([cdp('Page.enable'), cdp('Runtime.enable'), cdp('Network.enable')]);
+  await cdp('Emulation.setDeviceMetricsOverride', { width: 1440, height: 1100, deviceScaleFactor: 1, mobile: false });
+  await cdp('Page.navigate', { url: 'http://127.0.0.1:4173/' });
+  await until(`document.querySelector('.term-grid') || document.querySelector('.empty-state [role="alert"]')`, 45000).catch(async error => {
+    console.log('LOAD STATE', await evaluate('document.body.innerText')); throw error;
+  });
+  await until(`document.querySelector('.term-grid')`);
+  check('real Firestore terms loaded', await evaluate(`document.querySelectorAll('.term-card').length > 0`));
+  check('institutional logo resolves', await evaluate(`document.querySelector('.footer-brand img').complete && document.querySelector('.footer-brand img').naturalWidth > 0`));
+  await evaluate(`document.querySelector('button[aria-label="Ativar tema escuro"]')?.click()`);
+  await until(`document.documentElement.dataset.theme === 'dark'`);
+  await evaluate('document.fonts.ready.then(() => true)');
+  const darkContrast = await contrastAudit();
+  check('core text contrast passes AA in dark theme', darkContrast.every(item => item.ratio >= item.threshold));
+  await screenshot('home-dark-desktop.png');
+  await evaluate(`document.querySelector('.search-field input').focus()`);
+  await input('.search-field input', 'api');
+  await until(`document.querySelectorAll('[role="option"]').length > 0`);
+  check('autocomplete displays real API match and highlights it', await evaluate(`document.querySelector('[role="option"] strong').textContent.toLowerCase() === 'api' && document.querySelector('[role="option"] mark') !== null`));
+  await key('ArrowDown');
+  check('ArrowDown updates active result', await evaluate(`document.querySelector('.search-field input').getAttribute('aria-activedescendant').endsWith('-1') || document.querySelectorAll('[role="option"]').length === 1`));
+  await screenshot('search-dark-desktop.png');
+  await key('Escape');
+  check('Escape closes autocomplete', await evaluate(`document.querySelector('.search-field input').getAttribute('aria-expanded') === 'false'`));
+  await input('.search-field input', 'a');
+  await until(`document.querySelectorAll('[role="option"]').length > 1`);
+  await key('ArrowDown');
+  check('ArrowDown moves across multiple results', await evaluate(`document.querySelector('.search-field input').getAttribute('aria-activedescendant').endsWith('-1')`));
+  await key('ArrowUp');
+  check('ArrowUp returns to previous result', await evaluate(`document.querySelector('.search-field input').getAttribute('aria-activedescendant').endsWith('-0')`));
+  const keyboardTerm = await evaluate(`document.querySelector('[role="option"][aria-selected="true"] strong').textContent`);
+  await key('Enter');
+  await until(`document.querySelector('.reading-card')`);
+  check('Enter opens the keyboard-selected term', await evaluate(`document.querySelector('h1').textContent === ${JSON.stringify(keyboardTerm)}`));
+  await click('.back-catalog');
+  await until(`document.querySelector('.term-grid')`);
+  await input('.search-field input', 'zzzznonexistent');
+  await until(`document.querySelector('.panel-message .text-button')`);
+  check('empty search offers suggestion', await evaluate(`document.querySelector('.panel-message').textContent.includes('Sugerir')`));
+  await click('[aria-label="Limpar pesquisa"]');
+  check('clear search empties input', await evaluate(`document.querySelector('.search-field input').value === ''`));
+  await evaluate(`document.querySelector('h1').click(); document.querySelector('.search-field input').blur()`);
+  await input('.search-field input', 'api');
+  await until(`document.querySelector('.search-field input').getAttribute('aria-expanded') === 'true'`);
+  await evaluate(`document.querySelector('h1').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))`);
+  await until(`document.querySelector('.search-field input').getAttribute('aria-expanded') === 'false'`);
+  check('clicking outside closes autocomplete', true);
+  await key('k', 2);
+  await until(`document.querySelector('dialog[open]')`);
+  check('Ctrl+K opens focused global search', await evaluate(`document.querySelector('dialog').contains(document.activeElement) && document.activeElement.matches('input')`));
+  await click('dialog[open] [aria-label="Fechar pesquisa"]');
+  await click('.alphabet button[aria-label="Termos com a letra A"]');
+  await wait(200);
+  check('alphabet filter only displays A terms', await evaluate(`[...document.querySelectorAll('.term-card h3')].every(el => el.textContent.toLowerCase().startsWith('a'))`));
+  await evaluate(`document.querySelector('.alphabet button').click()`);
+  await evaluate(`(() => {
+    window.__speechCalls = [];
+    Object.defineProperty(window.speechSynthesis, 'speak', { configurable: true, value(utterance) { window.__speechCalls.push(utterance); utterance.onstart?.(new Event('start')); } });
+    Object.defineProperty(window.speechSynthesis, 'cancel', { configurable: true, value() {} });
+  })()`);
+  await click('.term-card:nth-child(1) .audio-button');
+  await until(`document.querySelector('.term-card:nth-child(1) .audio-button').getAttribute('aria-pressed') === 'true'`);
+  check('audio starts through expo-speech with actual term text', await evaluate(`window.__speechCalls.length === 1 && window.__speechCalls[0].text.includes(document.querySelector('.term-card h3').textContent)`));
+  await click('.term-card:nth-child(2) .audio-button');
+  await until(`document.querySelector('.term-card:nth-child(2) .audio-button').getAttribute('aria-pressed') === 'true'`);
+  check('starting another audio stops previous active state', await evaluate(`document.querySelectorAll('.audio-button[aria-pressed="true"]').length === 1 && window.__speechCalls.length === 2`));
+  await evaluate(`window.__speechCalls[0].onend?.(new Event('end'))`);
+  check('stale speech callback cannot reset newer playback', await evaluate(`document.querySelector('.term-card:nth-child(2) .audio-button').getAttribute('aria-pressed') === 'true'`));
+  await click('.term-card:nth-child(2) .audio-button');
+  await until(`document.querySelectorAll('.audio-button[aria-pressed="true"]').length === 0`);
+  check('audio toggle stops playback', true);
+  await click('.term-card:nth-child(1) .audio-button');
+  await until(`window.__speechCalls.length === 3`);
+  await evaluate(`window.__speechCalls[2].onerror?.(new Event('error'))`);
+  await until(`document.querySelector('.feedback.error')`);
+  check('speech errors are announced visibly', await evaluate(`document.querySelector('.feedback.error').getAttribute('role') === 'alert'`));
+  const firstTerm = await evaluate(`(() => { const card = [...document.querySelectorAll('.term-card')].find(el => el.querySelector('h3').textContent.toLowerCase() === 'api') || document.querySelector('.term-card'); return { name: card.querySelector('h3').textContent, href: card.querySelector('h3 a').getAttribute('href') }; })()`);
+  await evaluate(`[...document.querySelectorAll('.term-card h3 a')].find(el => el.getAttribute('href') === ${JSON.stringify(firstTerm.href)}).click()`);
+  await until(`document.querySelector('.reading-card')`);
+  check('term opens as shareable route', await evaluate(`location.pathname === '/termo' && new URLSearchParams(location.search).has('id')`));
+
+  await key('k', 2);
+  await until(`document.querySelector('dialog[open] input')`);
+  check('global shortcut also works on term page', await evaluate(`document.querySelectorAll('dialog[open]').length === 1 && document.activeElement.matches('dialog input')`));
+  await click('dialog[open] [aria-label="Fechar pesquisa"]');
+  await screenshot('term-dark-desktop.png');
+  await click('.edit-term');
+  await until(`document.querySelector('#suggestion-term')`);
+  check('suggest correction pre-fills actual term name', await evaluate(`document.querySelector('#suggestion-term').value === ${JSON.stringify(firstTerm.name)}`));
+  await click('.submit-suggestion');
+  await until(`document.querySelector('#description-error')`);
+  check('form validates and focuses invalid field', await evaluate(`document.activeElement.id === 'suggestion-description' && document.querySelector('#description-error') !== null`));
+  await input('#suggestion-description', 'Uma explicação para validar o contador, sem enviar dados.');
+  await until(`!document.querySelector('#description-error')`);
+  check('character counter reflects typed description', await evaluate(`document.querySelector('#description-count').textContent.startsWith(String(document.querySelector('#suggestion-description').value.length) + '/')`));
+  await screenshot('suggestion-dark-desktop.png');
+  // Do not submit valid test suggestions to the production Firestore.
+  await click('button[aria-label="Ativar tema claro"]');
+  await until(`document.documentElement.dataset.theme === 'light'`);
+  await screenshot('suggestion-light-desktop.png');
+  await cdp('Page.navigate', { url: 'http://127.0.0.1:4173/' });
+  await until(`document.querySelector('.term-grid')`);
+  check('light theme persists across reload', await evaluate(`document.documentElement.dataset.theme === 'light'`));
+  const lightContrast = await contrastAudit();
+  check('core text contrast passes AA in light theme', lightContrast.every(item => item.ratio >= item.threshold));
+  const accessibility = await cdp('Accessibility.getFullAXTree');
+  const unnamed = accessibility.nodes.filter(node => !node.ignored && ['button', 'link', 'combobox'].includes(node.role?.value) && !node.name?.value);
+  check('interactive controls have accessible names', unnamed.length === 0);
+  await screenshot('home-light-desktop.png');
+  await evaluate(`document.querySelector('#catalogo').scrollIntoView({ block: 'start', behavior: 'instant' })`);
+  await screenshot('catalog-light-desktop.png');
+  await evaluate(`document.querySelector('.tech-page').scrollTo({ top: 0, behavior: 'instant' })`);
+  for (const width of [1024, 768, 390, 320]) {
+    await cdp('Emulation.setDeviceMetricsOverride', { width, height: 900, deviceScaleFactor: 1, mobile: false });
+    await wait(250);
+    check(`no horizontal overflow at ${width}px`, await evaluate(`document.documentElement.scrollWidth <= ${width}`));
+    if (width <= 390) {
+      check(`mobile navigation icons visible at ${width}px`, await evaluate(`[...document.querySelectorAll('.nav-link .tech-icon > *')].every(el => getComputedStyle(el).display !== 'none')`));
+      check(`mobile navigation retains accessible names at ${width}px`, await evaluate(`[...document.querySelectorAll('.nav-link')].every(el => !!el.getAttribute('aria-label'))`));
+    }
+    await screenshot(`home-light-${width}.png`);
+  }
+  await cdp('Page.navigate', { url: `http://127.0.0.1:4173${firstTerm.href}` });
+  await until(`document.querySelector('.reading-card')`);
+  check('direct term URL loads after refresh', await evaluate(`document.querySelector('h1').textContent === ${JSON.stringify(firstTerm.name)}`));
+  await screenshot('term-light-mobile.png');
+  await click('.edit-term');
+  await until(`document.querySelector('#suggestion-term')`);
+  check('suggestion form fits 320px viewport', await evaluate(`document.documentElement.scrollWidth <= 320`));
+  await screenshot('suggestion-light-mobile.png');
+  await cdp('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-reduced-motion', value: 'reduce' }] });
+  check('reduced motion disables animations', await evaluate(`getComputedStyle(document.querySelector('.primary-button')).transitionDuration === '0s'`));
+  check('no JavaScript runtime errors', errors.length === 0);
+  fs.writeFileSync(path.join(artifacts, 'browser-results.json'), JSON.stringify({ results, errors, firstTerm, darkContrast, lightContrast }, null, 2));
+}
+main().catch(error => { console.error(error); fs.writeFileSync(path.join(artifacts, 'browser-results.json'), JSON.stringify({ results, errors, failure: String(error) }, null, 2)); process.exitCode = 1; }).finally(() => { socket?.close(); chrome.kill(); });
