@@ -8,6 +8,8 @@ import { useDictionary } from '../context/DictionaryContext';
 import { useSuggestion } from '../hooks/useSuggestion';
 import { filterCatalog, normalize, relatedTerms, summarize, Term } from '../lib/dictionary';
 
+const heroConcepts = require('../../assets/images/hero-concepts.webp');
+
 function Page({ title, children }: { title: string; children: React.ReactNode }) {
   const focused = useIsFocused();
   if (!focused) return null;
@@ -21,6 +23,29 @@ function DictionaryState() {
 }
 function TermCard({ term, query }: { term: Term; query: string }) {
   return <article className="term-card"><TermIcon term={term} /><h3><Link href={termHref(term) as '/termo'}><Highlight value={term.termo} query={query} /></Link></h3><p><Highlight value={summarize(term.descricao)} query={query} /></p><div className="card-actions"><AudioButton term={term} /><Link href={termHref(term) as '/termo'} className="card-arrow" aria-label={`Ler explicação completa de ${term.termo}`}><Icon name="chevron-forward-outline" size={17} /></Link></div></article>;
+}
+function AlphabetFilter({ letter, total, onChange }: { letter: string; total: number | null; onChange: (letter: string) => void }) {
+  const track = useRef<HTMLDivElement>(null);
+  const [edges, setEdges] = useState({ start: true, end: true, overflow: false });
+  useEffect(() => {
+    const element = track.current;
+    if (!element) return;
+    const update = () => setEdges({ start: element.scrollLeft <= 1, end: element.scrollLeft + element.clientWidth >= element.scrollWidth - 1, overflow: element.scrollWidth > element.clientWidth + 1 });
+    const observer = new ResizeObserver(update);
+    observer.observe(element);
+    element.addEventListener('scroll', update, { passive: true });
+    update();
+    return () => { observer.disconnect(); element.removeEventListener('scroll', update); };
+  }, [total]);
+  const scroll = (direction: number) => track.current?.scrollBy({ left: direction * track.current.clientWidth * 0.65, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
+  return <div className="alphabet-bar">
+    {edges.overflow && <button type="button" className="alphabet-scroll" aria-label="Ver letras anteriores" disabled={edges.start} onClick={() => scroll(-1)}><Icon name="chevron-back-outline" size={18} /></button>}
+    <div ref={track} className="alphabet" role="group" aria-label="Filtrar termos pela primeira letra">
+      <button type="button" className={!letter ? 'selected' : ''} aria-pressed={!letter} onClick={() => onChange('')}>Todos{total !== null && <span> ({total})</span>}</button>
+      {'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(initial => <button type="button" key={initial} aria-label={`Termos com a letra ${initial}`} aria-pressed={letter === initial} className={letter === initial ? 'selected' : ''} onClick={() => onChange(initial)}>{initial}</button>)}
+    </div>
+    {edges.overflow && <button type="button" className="alphabet-scroll" aria-label="Ver próximas letras" disabled={edges.end} onClick={() => scroll(1)}><Icon name="chevron-forward-outline" size={18} /></button>}
+  </div>;
 }
 export function HomeScreen() {
   const { terms, loading, error } = useDictionary();
@@ -40,10 +65,10 @@ export function HomeScreen() {
   }, [params.catalogo, query]);
   return <Page title="Tecnologia em palavras simples"><main id="conteudo" tabIndex={-1}>
     <section className="hero-section"><div className="container"><div className="hero-layout"><div className="hero-copy"><p className="eyebrow"><span /> CONHECIMENTO SEM BARREIRAS</p><h1>Tecnologia em<br /><em>palavras simples.</em></h1><p className="hero-description">Encontre definições claras para os termos que movem o mundo digital.<br className="desktop-break" /> Sem jargões, sem complicação.</p><Search /><div className="search-examples"><span>Experimente:</span>{chips.map(term => <Link key={term.id} href={termHref(term) as '/termo'}>{term.termo}</Link>)}</div></div>
-    <aside className="hero-spotlight" aria-label="Um conceito para começar"><div className="spotlight-top"><span>UMA PALAVRA. NOVAS POSSIBILIDADES.</span><Icon name="sparkles-outline" size={18} /></div>{spotlight ? <><TermIcon term={spotlight} large /><h2>{spotlight.termo}</h2><p>{summarize(spotlight.descricao, 150)}</p><Link className="spotlight-link" href={termHref(spotlight) as '/termo'}>Entenda esse conceito <Icon name="arrow-forward-outline" size={19} /></Link></> : <><span className="spotlight-book"><Icon name="book-outline" size={58} /></span><h2>Um mundo para descobrir.</h2><p>Cada palavra é um novo passo para entender a tecnologia.</p><a className="spotlight-link" href="#catalogo">Explore o dicionário <Icon name="arrow-down-outline" size={19} /></a></>}<div className="spotlight-bottom"><Icon name="headset-outline" size={16} /><span>Leia. Ouça. Aprenda no seu ritmo.</span></div></aside></div>
+    <aside className="hero-visual" aria-label="Um conceito para começar"><img className="hero-art" src={typeof heroConcepts === 'string' ? heroConcepts : heroConcepts.uri} alt="" width="430" height="430" fetchPriority="high" />{spotlight && <Link className="concept-link" href={termHref(spotlight) as '/termo'}><span>COMECE POR AQUI</span><strong>{spotlight.termo}</strong><Icon name="arrow-forward-outline" size={18} /></Link>}</aside></div>
     <div className="features"><div className="feature"><span className="feature-icon tone-green"><Icon name="flash-outline" size={25} /></span><div><h2>Rápido</h2><p>Encontre em segundos</p></div></div><div className="feature"><span className="feature-icon tone-blue"><Icon name="chatbubble-ellipses-outline" size={25} /></span><div><h2>Acessível</h2><p>Explicações sem jargões</p></div></div><div className="feature"><span className="feature-icon tone-orange"><Icon name="people-outline" size={25} /></span><div><h2>Colaborativo</h2><p>Construído com a comunidade</p></div></div></div></div></section>
     <section id="catalogo" ref={catalog} className="catalog-section"><div className="container"><div className="section-heading"><div><p className="eyebrow">SEU PRÓXIMO APRENDIZADO</p><h2>Explore os termos<span>.</span></h2><p>Conheça os conceitos e ouça cada explicação.</p></div><label className="sort-control"><span className="sr-only">Ordenar termos</span><Icon name="swap-vertical-outline" size={16} /><select value={descending ? 'za' : 'az'} onChange={event => { setDescending(event.target.value === 'za'); setVisible(12); }}><option value="az">De A a Z</option><option value="za">De Z a A</option></select><Icon name="chevron-down-outline" size={14} /></label></div>
-    <div className="alphabet" role="group" aria-label="Filtrar termos pela primeira letra"><button type="button" className={!letter ? 'selected' : ''} aria-pressed={!letter} onClick={() => { setLetter(''); setVisible(12); }}>Todos{!loading && !error && <span> ({terms.length})</span>}</button>{'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(initial => <button type="button" key={initial} aria-label={`Termos com a letra ${initial}`} aria-pressed={letter === initial} className={letter === initial ? 'selected' : ''} onClick={() => { setLetter(initial); setVisible(12); }}>{initial}</button>)}</div>
+    <AlphabetFilter letter={letter} total={loading || error ? null : terms.length} onChange={initial => { setLetter(initial); setVisible(12); }} />
     {query && <div className="catalog-query"><span>Resultados para <strong>“{query}”</strong></span><Link href="/?catalogo=1" className="text-button">Limpar pesquisa <Icon name="close-outline" size={16} /></Link></div>}
     <span className="sr-only" role="status">{loading ? 'Carregando termos' : `${filtered.length} termos encontrados${letter ? ` com a letra ${letter}` : ''}.`}</span><DictionaryState />
     {!loading && !error && (filtered.length ? <><div className="term-grid" key={`${letter}-${descending}-${query}`}>{filtered.slice(0, visible).map(term => <TermCard key={term.id} term={term} query={query} />)}</div><div className="catalog-bottom"><span>Mostrando {Math.min(visible, filtered.length)} de {filtered.length} termos</span>{visible < filtered.length && <button type="button" className="secondary-button" onClick={() => setVisible(count => count + 12)}>Mostrar mais termos <Icon name="chevron-down-outline" size={17} /></button>}</div></> : <div className="empty-state"><Icon name="search-outline" size={36} /><h3>{terms.length ? 'Ainda não há termos com esse filtro.' : 'Nosso dicionário está começando.'}</h3><p>Uma nova palavra pode começar com você.</p><Link className="secondary-button" href={{ pathname: '/sugestao', params: { termo: query } }}>Sugerir um termo <Icon name="arrow-forward-outline" size={18} /></Link>{letter && <button className="text-button" type="button" onClick={() => setLetter('')}>Ver todas as letras</button>}</div>)}

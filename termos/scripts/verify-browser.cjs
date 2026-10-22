@@ -60,6 +60,8 @@ async function main() {
   await evaluate(`document.querySelector('button[aria-label="Ativar tema escuro"]')?.click()`);
   await until(`document.documentElement.dataset.theme === 'dark'`);
   await evaluate('document.fonts.ready.then(() => true)');
+  check('local display font loads', await evaluate(`document.fonts.check('800 24px Manrope') && getComputedStyle(document.querySelector('h1')).fontFamily.includes('Manrope')`));
+  check('hero illustration resolves', await evaluate(`document.querySelector('.hero-art').complete && document.querySelector('.hero-art').naturalWidth > 0`));
   const darkContrast = await contrastAudit();
   check('core text contrast passes AA in dark theme', darkContrast.every(item => item.ratio >= item.threshold));
   await screenshot('home-dark-desktop.png');
@@ -98,11 +100,29 @@ async function main() {
   await key('k', 2);
   await until(`document.querySelector('dialog[open]')`);
   check('Ctrl+K opens focused global search', await evaluate(`document.querySelector('dialog').contains(document.activeElement) && document.activeElement.matches('input')`));
+  await input('dialog[open] input', 'api');
+  await screenshot('global-search-dark-desktop.png');
   await click('dialog[open] [aria-label="Fechar pesquisa"]');
+  check('closing global search returns focus to search control', await evaluate(`document.activeElement.getAttribute('aria-label') === 'Pesquisar no dicionário'`));
   await click('.alphabet button[aria-label="Termos com a letra A"]');
   await wait(200);
   check('alphabet filter only displays A terms', await evaluate(`[...document.querySelectorAll('.term-card h3')].every(el => el.textContent.toLowerCase().startsWith('a'))`));
   await evaluate(`document.querySelector('.alphabet button').click()`);
+  check('catalog includes all 26 letters', await evaluate(`document.querySelectorAll('.alphabet button').length === 27`));
+  await click('.alphabet-scroll[aria-label="Ver próximas letras"]');
+  await until(`document.querySelector('.alphabet').scrollLeft > 0`);
+  check('alphabet scroll controls reveal remaining letters', true);
+  await evaluate(`document.querySelector('.alphabet').scrollTo({ left: 0, behavior: 'instant' })`);
+  const ascendingFirst = await evaluate(`document.querySelector('.term-card h3').textContent`);
+  await evaluate(`document.querySelector('.sort-control select').value = 'za'; document.querySelector('.sort-control select').dispatchEvent(new Event('change', { bubbles: true }))`);
+  await until(`document.querySelector('.term-card h3').textContent !== ${JSON.stringify(ascendingFirst)}`);
+  check('descending catalog order works', await evaluate(`(() => { const names = [...document.querySelectorAll('.term-card h3')].map(el => el.textContent); return names.every((name, i) => !i || names[i - 1].localeCompare(name, 'pt-BR') >= 0); })()`));
+  await evaluate(`document.querySelector('.sort-control select').value = 'az'; document.querySelector('.sort-control select').dispatchEvent(new Event('change', { bubbles: true }))`);
+  await until(`document.querySelector('.term-card h3').textContent === ${JSON.stringify(ascendingFirst)}`);
+  const initialCards = await evaluate(`document.querySelectorAll('.term-card').length`);
+  await click('.catalog-bottom button');
+  await until(`document.querySelectorAll('.term-card').length > ${initialCards}`);
+  check('load more reveals more real terms', true);
   await evaluate(`(() => {
     window.__speechCalls = [];
     Object.defineProperty(window.speechSynthesis, 'speak', { configurable: true, value(utterance) { window.__speechCalls.push(utterance); utterance.onstart?.(new Event('start')); } });
@@ -143,8 +163,11 @@ async function main() {
   await input('#suggestion-description', 'Uma explicação para validar o contador, sem enviar dados.');
   await until(`!document.querySelector('#description-error')`);
   check('character counter reflects typed description', await evaluate(`document.querySelector('#description-count').textContent.startsWith(String(document.querySelector('#suggestion-description').value.length) + '/')`));
-  await screenshot('suggestion-dark-desktop.png');
+  await screenshot('suggestion-edit-dark-desktop.png');
   // Do not submit valid test suggestions to the production Firestore.
+  await cdp('Page.navigate', { url: 'http://127.0.0.1:4173/sugestao' });
+  await until(`document.querySelector('#suggestion-term') && !document.querySelector('#suggestion-term').value && document.documentElement.dataset.theme === 'dark'`);
+  await screenshot('suggestion-dark-desktop.png');
   await click('button[aria-label="Ativar tema claro"]');
   await until(`document.documentElement.dataset.theme === 'light'`);
   await screenshot('suggestion-light-desktop.png');
@@ -159,13 +182,15 @@ async function main() {
   await screenshot('home-light-desktop.png');
   await evaluate(`document.querySelector('#catalogo').scrollIntoView({ block: 'start', behavior: 'instant' })`);
   await screenshot('catalog-light-desktop.png');
+  check('navigation remains visible while exploring catalog', await evaluate(`document.querySelector('.site-header').getBoundingClientRect().top >= 0 && document.querySelector('.site-header').getBoundingClientRect().bottom <= innerHeight`));
   await evaluate(`document.querySelector('.tech-page').scrollTo({ top: 0, behavior: 'instant' })`);
   for (const width of [1024, 768, 390, 320]) {
     await cdp('Emulation.setDeviceMetricsOverride', { width, height: 900, deviceScaleFactor: 1, mobile: false });
     await wait(250);
     check(`no horizontal overflow at ${width}px`, await evaluate(`document.documentElement.scrollWidth <= ${width}`));
+    check(`page content fits its scroll area at ${width}px`, await evaluate(`(() => { const page = document.querySelector('.tech-page'); return page.scrollWidth <= page.clientWidth + 1; })()`));
     if (width <= 390) {
-      check(`mobile navigation icons visible at ${width}px`, await evaluate(`[...document.querySelectorAll('.nav-link .tech-icon > *')].every(el => getComputedStyle(el).display !== 'none')`));
+      check(`mobile navigation icons visible at ${width}px`, await evaluate(`[...document.querySelectorAll('.nav-link')].filter(link => link.getBoundingClientRect().width > 0).every(link => link.querySelector('.tech-icon')?.getBoundingClientRect().width > 0)`));
       check(`mobile navigation retains accessible names at ${width}px`, await evaluate(`[...document.querySelectorAll('.nav-link')].every(el => !!el.getAttribute('aria-label'))`));
     }
     await screenshot(`home-light-${width}.png`);
