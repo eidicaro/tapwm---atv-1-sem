@@ -110,7 +110,7 @@ async function main() {
   })()`);
   await click('.term-card:nth-child(1) .audio-button');
   await until(`document.querySelector('.term-card:nth-child(1) .audio-button').getAttribute('aria-pressed') === 'true'`);
-  check('audio starts through expo-speech with actual term text', await evaluate(`window.__speechCalls.length === 1 && window.__speechCalls[0].text.includes(document.querySelector('.term-card h3').textContent)`));
+  check('audio starts through browser speech synthesis with actual term text', await evaluate(`window.__speechCalls.length === 1 && window.__speechCalls[0].text.includes(document.querySelector('.term-card h3').textContent)`));
   await click('.term-card:nth-child(2) .audio-button');
   await until(`document.querySelector('.term-card:nth-child(2) .audio-button').getAttribute('aria-pressed') === 'true'`);
   check('starting another audio stops previous active state', await evaluate(`document.querySelectorAll('.audio-button[aria-pressed="true"]').length === 1 && window.__speechCalls.length === 2`));

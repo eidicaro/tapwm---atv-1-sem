@@ -3,6 +3,7 @@ import { Platform } from 'react-native';
 import { usePathname, useGlobalSearchParams } from 'expo-router';
 import * as Speech from 'expo-speech';
 import { Term } from '../lib/dictionary';
+import { speakWebSpeech, stopWebSpeech } from '../lib/webSpeech';
 
 type Audio = { speaking: string | null; error: string; listen: (term: Term) => Promise<void>; stop: () => void };
 const AudioContext = createContext<Audio>({ speaking: null, error: '', listen: async () => undefined, stop: () => undefined });
@@ -19,11 +20,12 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     generation.current += 1;
     current.current = null;
     setSpeaking(null);
-    void Speech.stop().catch(() => undefined);
+    if (Platform.OS === 'web') stopWebSpeech();
+    else void Speech.stop().catch(() => undefined);
   }, []);
   useEffect(() => { stop(); setError(''); return stop; }, [pathname, id, stop]);
   const listen = async (term: Term) => {
-    if (Platform.OS === 'web' && (typeof window === 'undefined' || !window.speechSynthesis || typeof window.speechSynthesis.speak !== 'function')) {
+    if (Platform.OS === 'web' && (typeof window === 'undefined' || !window.speechSynthesis || typeof window.speechSynthesis.speak !== 'function' || typeof SpeechSynthesisUtterance === 'undefined')) {
       setError('A leitura em voz alta não está disponível neste navegador.');
       return;
     }
@@ -36,12 +38,22 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     const finish = () => { if (version === generation.current) { if (watchdog.current) clearTimeout(watchdog.current); current.current = null; setSpeaking(null); } };
     const fail = () => { if (version === generation.current) { finish(); setError('Não foi possível reproduzir o áudio. Tente novamente ou confira as vozes do seu dispositivo.'); } };
     try {
-      await Speech.stop();
+      if (Platform.OS === 'web') stopWebSpeech();
+      else await Speech.stop();
       if (version !== generation.current || stopOnly) return;
-      watchdog.current = setTimeout(() => { if (version === generation.current) { void Speech.stop().catch(() => undefined); fail(); } }, 7000);
-      Speech.speak(`${term.termo}. ${term.descricao}${term.explicacao ? `. ${term.explicacao}` : ''}`, {
-        language: 'pt-BR', rate: 0.86, pitch: 1, onStart: () => { if (version === generation.current && watchdog.current) clearTimeout(watchdog.current); }, onDone: finish, onStopped: finish, onError: fail,
-      });
+      watchdog.current = setTimeout(() => {
+        if (version !== generation.current) return;
+        if (Platform.OS === 'web') stopWebSpeech();
+        else void Speech.stop().catch(() => undefined);
+        fail();
+      }, 7000);
+      const text = `${term.termo}. ${term.descricao}${term.explicacao ? `. ${term.explicacao}` : ''}`;
+      const callbacks = {
+        onStart: () => { if (version === generation.current && watchdog.current) clearTimeout(watchdog.current); },
+        onDone: finish, onError: fail,
+      };
+      if (Platform.OS === 'web') speakWebSpeech(text, callbacks);
+      else Speech.speak(text, { language: 'pt-BR', rate: 0.86, pitch: 1, ...callbacks, onStopped: finish });
     } catch { fail(); }
   };
   return <AudioContext.Provider value={{ speaking, error, listen, stop }}>{children}</AudioContext.Provider>;
