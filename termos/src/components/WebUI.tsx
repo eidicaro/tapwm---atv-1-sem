@@ -1,15 +1,13 @@
 import { useEffect, useId, useRef, useState } from 'react';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon, TermIcon } from './WebIcon';
 import { useRouter } from 'expo-router';
 import { useDictionary } from '../context/DictionaryContext';
 import { useAudio } from '../context/AudioContext';
 import { highlightParts, searchTerms, searchSnippet, Term } from '../lib/dictionary';
 import './experience.css';
+export { Icon, TermIcon } from './WebIcon';
 const larLogo = require('../../assets/images/logo_lar.png');
 
-export function Icon({ name, size = 20 }: { name: keyof typeof Ionicons.glyphMap; size?: number }) {
-  return <span className="tech-icon" aria-hidden="true"><Ionicons name={name} size={size} color="currentColor" /></span>;
-}
 export function termHref(term: Term) { return `/termo?id=${encodeURIComponent(term.id)}`; }
 export function Highlight({ value, query }: { value: string; query: string }) {
   return <>{highlightParts(value, query).map((part, index) => part.match ? <mark key={index}>{part.text}</mark> : part.text)}</>;
@@ -76,18 +74,6 @@ export function Search({ autoFocus = false, onNavigate }: { autoFocus?: boolean;
   </div>;
 }
 
-export function TermIcon({ term, large = false }: { term: Term; large?: boolean }) {
-  const name = term.termo.toLowerCase();
-  const mapping: [RegExp, keyof typeof Ionicons.glyphMap, string][] = [
-    [/api|rede|network|internet/, 'git-network-outline', 'blue'], [/seguran|antiv|security/, 'shield-checkmark-outline', 'blue'],
-    [/algorit|process/, 'flash-outline', 'green'], [/backup|armazen/, 'save-outline', 'purple'],
-    [/bug|erro/, 'bug-outline', 'rose'], [/data|dados|sql|banco/, 'server-outline', 'orange'],
-    [/front|back|código|code|program/, 'code-slash-outline', 'orange'], [/cloud|nuvem/, 'cloud-outline', 'blue'],
-    [/ia|intelig|machine/, 'hardware-chip-outline', 'purple'], [/b\.i|business/, 'bar-chart-outline', 'orange'],
-  ];
-  const found = mapping.find(([pattern]) => pattern.test(name));
-  return <span className={`term-icon tone-${found?.[2] ?? 'green'} ${large ? 'large' : ''}`}><Icon name={found?.[1] ?? 'terminal-outline'} size={large ? 35 : 23} /></span>;
-}
 export function AudioButton({ term, label = false }: { term: Term; label?: boolean }) {
   const { speaking, listen } = useAudio();
   const playing = speaking === term.id;
